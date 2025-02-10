@@ -1,5 +1,10 @@
 push!(LOAD_PATH, joinpath(@__DIR__, "../src"))
+using FCEnsemble
 
-using Documenter, FCEnsemble
+import Documenter
 
-makedocs(sitename="My Documentation")
+makedocs(
+    sitename="My Documentation",
+    repo = "https://github.com/fboschetty/FCEnsemble",
+    modules = [FCEnsemble]
+    )

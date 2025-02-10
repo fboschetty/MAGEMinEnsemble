@@ -2,20 +2,34 @@ module InputValidation
 
 using OrderedCollections
 
-# Check if constant_inputs is a dictionary
-function check_constant_inputs_dict(constant_inputs::Any)
+
+"""
+    check_constant_inputs_dict(constant_inputs)
+
+Check that constant_inputs is a dictionary.
+"""
+function check_constant_inputs_dict(constant_inputs::Dict)
     if !(isa(constant_inputs, Dict) || isa(constant_inputs, OrderedDict))
         throw(ArgumentError("constant_inputs must be a dictionary or an ordered dictionary."))
     end
 end
 
-# Check if variable_inputs is a dictionary
-function check_variable_inputs_dict(variable_inputs::Any)
+"""
+    check_variable_inputs_dict(constant_inputs)
+
+Check that variable_inputs is a dictionary.
+"""
+function check_variable_inputs_dict(variable_inputs::Dict)
     if !(isa(variable_inputs, Dict) || isa(variable_inputs, OrderedDict))
         throw(ArgumentError("variable_inputs must be a dictionary or an ordered dictionary."))
     end
 end
 
+"""
+    check_constant_inputs_values(constant_inputs)
+
+Check the contents of constant_inputs for typing, ensure that numeric values are Float64.
+"""
 function check_constant_inputs_values(constant_inputs::Dict)
     for (key, value) in constant_inputs
         if key == "bulk" && (isa(value, OrderedDict) || isa(value, Dict))
@@ -39,6 +53,12 @@ function check_constant_inputs_values(constant_inputs::Dict)
     end
 end
 
+
+"""
+    check_bulk_in_constant_inputs(constant_inputs)
+
+If "bulk" is a constant_input, check typing and that oxides are numeric.
+"""
 function check_bulk_in_constant_inputs(constant_inputs::Dict)
     if haskey(constant_inputs, "bulk")
         if !(isa(constant_inputs["bulk"], Dict) || isa(constant_inputs["bulk"], OrderedDict))
@@ -53,6 +73,12 @@ function check_bulk_in_constant_inputs(constant_inputs::Dict)
     end
 end
 
+
+"""
+    check_variable_inputs_values(variable_inputs)
+
+Check that variable inputs are Vectors.
+"""
 function check_variable_inputs_values(variable_inputs::Dict)
     for (key, value) in variable_inputs
         if key == "bulk" && (isa(value, Dict) || isa(value, OrderedDict))
@@ -64,6 +90,11 @@ function check_variable_inputs_values(variable_inputs::Dict)
     end
 end
 
+"""
+    check_bulk_in_variable_input(constant_inputs)
+
+If "bulk" is a variable input, check that it is a dictionary and that it contains Vectors of Numeric values.
+"""
 function check_bulk_in_variable_inputs(variable_inputs::Dict)
     if haskey(variable_inputs, "bulk")
         bulk = variable_inputs["bulk"]
@@ -79,6 +110,11 @@ function check_bulk_in_variable_inputs(variable_inputs::Dict)
     end
 end
 
+"""
+    validate_inputs(constant_inputs, variable_inputs)
+
+Combine the above validation functions into a single function for ease of use.
+"""
 function validate_inputs(constant_inputs::Dict, variable_inputs::Dict)
     check_constant_inputs_dict(constant_inputs)
     check_variable_inputs_dict(variable_inputs)
@@ -88,7 +124,12 @@ function validate_inputs(constant_inputs::Dict, variable_inputs::Dict)
     check_bulk_in_variable_inputs(variable_inputs)
 end
 
-# Validation function to check for common key conflicts
+
+"""
+    validate_keys(constant_inputs, variable_inputs)
+
+Check no keys are defined in both constant and variable inputs.
+"""
 function validate_keys(constant_inputs::Dict, variable_inputs::Dict)
     # Check for matching keys between constant and variable inputs
     common_keys = intersect(keys(variable_inputs), keys(constant_inputs))
@@ -98,7 +139,12 @@ function validate_keys(constant_inputs::Dict, variable_inputs::Dict)
     end
 end
 
-# Validation function to check bulk composition and pressure
+
+"""
+    validate_compositions_and_pressure(combined_inputs)
+
+Check that both "bulk" and "P" are defined in either variable or constant inputs.
+"""
 function validate_compositions_and_pressure(combined_inputs::Dict)
     # Ensure bulk composition and pressure are defined
     if !haskey(combined_inputs, "bulk")
@@ -110,8 +156,12 @@ function validate_compositions_and_pressure(combined_inputs::Dict)
     end
 end
 
-# Validation function to ensure oxides are compatible with MAGEMin
-# Function to validate oxides in the bulk composition
+
+"""
+    validate_oxides(combined_inputs)
+
+Ensure that the defined bulk composition has the correct oxides included. Provides error messages that identify missing or extraneous oxides.
+"""
 function validate_oxides(combined_inputs::Dict)
     # Define the accepted oxides for MAGEMin
     accepted_oxides = ["SiO2", "TiO2", "Al2O3", "Cr2O3", "FeO", "MgO", "CaO", "Na2O", "K2O", "H2O", "O", "Fe2O3"]
@@ -144,8 +194,12 @@ function validate_oxides(combined_inputs::Dict)
     end
 end
 
+"""
+    validate_bulk_and_pressure(combined_inputs)
 
-# Validation function to ensure no missing or negative values in the bulk composition or pressure
+Check that the provided bulk and pressure values are correct, e.g., non negative or missing.
+Replace 0 values with small values to prevent MAGEMin behaving unexpectedly.
+"""
 function validate_bulk_and_pressure(combined_inputs::Dict)
     # Ensure no missing values in the bulk composition
     for (oxide, value) in combined_inputs["bulk"]
@@ -180,7 +234,11 @@ function validate_bulk_and_pressure(combined_inputs::Dict)
     end
 end
 
-# Function to check if the buffer is valid
+"""
+    validate_buffer(combined_inputs)
+
+Ensure that buffer string is permitted by MAGEMin.
+"""
 function validate_buffer(combined_inputs::Dict)
     allowed_oxygen_buffers = ["qfm", "qif", "nno", "hm", "cco"]
     allowed_activity_buffers = ["aH2O", "aO2", "aMgO", "aFeO", "aAl2O3", "aTiO2", "aSio2"]
@@ -194,7 +252,19 @@ function validate_buffer(combined_inputs::Dict)
     end
 end
 
-# Main function to prepare inputs
+
+"""
+    prepare_inputs(constant_inputs, variable_inputs)
+
+Prepare and validate both constant_inputs and variable_inputs prior to ensure they are suitable for MAGEMin.
+
+Inputs:
+    - constant_inputs (Dict): inputs that will remain unchanged between MAGEMin simulations.
+    - variable_inputs (Dict): inputs that vary across MAGEMin simulations.
+
+Outputs:
+    - combined_inputs (Dict): Single dictionary containing both variable and constant inputs that have the correct types to be used in MAGEMin.
+"""
 function prepare_inputs(constant_inputs::Dict, variable_inputs::Dict) :: Dict
     # Validate input types
     validate_inputs(constant_inputs, variable_inputs)

@@ -1,0 +1,3 @@
+var documenterSearchIndex = {"docs":
+[{"location":"#FCEnsemble.jl-Documentation","page":"FCEnsemble.jl Documentation","title":"FCEnsemble.jl Documentation","text":"","category":"section"},{"location":"","page":"FCEnsemble.jl Documentation","title":"FCEnsemble.jl Documentation","text":"CurrentModule = FCEnsemble","category":"page"},{"location":"","page":"FCEnsemble.jl Documentation","title":"FCEnsemble.jl Documentation","text":"func(x)","category":"page"},{"location":"#FCEnsemble.func-Tuple{Any}","page":"FCEnsemble.jl Documentation","title":"FCEnsemble.func","text":"func(x)\n\nReturn double the number 'x' plus '1'.\n\n\n\n\n\n","category":"method"}]
+}

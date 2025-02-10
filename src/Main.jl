@@ -17,7 +17,7 @@ using .GenerateEnsemble
 #       - Monte Carlo X -> Check all way through
 #   - Make fractional crystallisation simulations threaded
 #   - Define output folder
-
+#   - Return simulations as dictionary using output file.
 
 # Define simulation parameters
 T_start = 1400.
@@ -53,8 +53,7 @@ variable_inputs["P"] = collect(range(0.0, 2.0, step=0.5))  # Pressure in kbar.
 
 # Define parameters for simulation
 sys_in = "wt"
-max_steps = length(T_array)
 # output_folder = ""
 
 # Run the simulations
-GenerateEnsemble.run_simulations(T_array, constant_inputs, variable_inputs, max_steps, sys_in)
+GenerateEnsemble.run_simulations(T_array, constant_inputs, variable_inputs, sys_in)
