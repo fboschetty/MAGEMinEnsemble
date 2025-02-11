@@ -32,13 +32,14 @@ function generate_bulk_mc(bulk::AbstractDict{String, Float64}, abs_unc::Abstract
             uncertainty = abs_unc[oxide]
             # Generate n_samples random samples for this oxide using a normal distribution
             samples = rand(Normal(value, uncertainty), n_samples)
-            samples[samples .< 0] .= 0.0
 
             # Raise a warning once if any negative values were replaced
-            if any(samples .< 0) && !warning_raised
+            if any(samples .< 0.) && !warning_raised
                 @warn "Negative values replaced by zero."
                 warning_raised = true
             end
+
+            samples[samples .< 0.] .= 0.0
             bulk_mc[string(oxide)] = samples
         else
             # If no matching abs_unc value is found for this oxide, throw error

@@ -1,4 +1,5 @@
 using Test
+using Logging
 using Distributions
 
 include("../src/MonteCarloBulk.jl")
@@ -46,4 +47,45 @@ end
 
     # Check if we got exactly 1 sample for oxide1
     @test length(bulk_mc["oxide1"]) == 1
+end
+
+# Test: Ensure the function works with both Dict and OrderedDict inputs
+@testset "generate_bulk_mc with Dict and OrderedDict" begin
+    # OrderedDict Test
+    bulk_ordered = OrderedDict("SiO2" => 12.0, "Al2O3" => 15.0, "Fe2O3" => 20.0)
+    abs_unc = Dict("SiO2" => 1.0, "Al2O3" => 1.5, "Fe2O3" => 2.0)
+    n_samples = 5
+    result_ordered = MonteCarloBulk.generate_bulk_mc(bulk_ordered, abs_unc, n_samples)
+
+    @test typeof(result_ordered) == OrderedDict{String, Vector{Float64}}
+    @test all(length(result_ordered[key]) == n_samples for key in keys(result_ordered))
+
+    # Dict Test
+    bulk_dict = Dict("SiO2" => 12.0, "Al2O3" => 15.0, "Fe2O3" => 20.0)
+    result_dict = MonteCarloBulk.generate_bulk_mc(bulk_dict, abs_unc, n_samples)
+
+    @test typeof(result_dict) == Dict{String, Vector{Float64}}
+    @test all(length(result_dict[key]) == n_samples for key in keys(result_dict))
+end
+
+# Test: Ensure negative values are replaced by zero
+@testset "generate_bulk_mc negative value replacement" begin
+    bulk_with_negatives = Dict("SiO2" => 12.0, "Al2O3" => -5.0, "Fe2O3" => 20.0)
+    abs_unc_neg = Dict("SiO2" => 1.0, "Al2O3" => 1.5, "Fe2O3" => 2.0)
+
+    result_with_negatives = MonteCarloBulk.generate_bulk_mc(bulk_with_negatives, abs_unc_neg, 5)
+
+    # Check that negative values were replaced by zero
+    @test all(result_with_negatives["Al2O3"] .>= 0)
+end
+
+# Test: Ensure warning is printed only once
+@testset "generate_bulk_mc warning handling" begin
+    bulk_warn = Dict("SiO2" => -12.0, "Al2O3" => -5.0)
+    abs_unc_warn = Dict("SiO2" => 1.0, "Al2O3" => 1.0)
+
+    # Check if the warning message was logged
+    @test_warn "Negative values replaced by zero." begin
+        MonteCarloBulk.generate_bulk_mc(bulk_warn, abs_unc_warn, 5)
+    end
 end
