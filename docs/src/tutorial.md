@@ -182,7 +182,7 @@ constant_inputs["bulk"] = OrderedDict(
 
 variable_inputs = Dict()
 variable_inputs["bulk"] = OrderedDict(
-    "H2O" => collect(range(start=0.0, stop=6.0, step=1.0)),
+    "H2O"  => collect(range(start=0.0, stop=6.0, step=1.0)),
     "Na2O" => collect(range(start=0.0, stop=6.0, step=1.0))
 )
 ```
@@ -193,16 +193,16 @@ Finally, all oxides can be defined as vectors. In this case all vectors must hav
 n_steps = 25
 variable_inputs = Dict()
 variable_inputs["bulk"] = OrderedDict(
-    "SiO2"  => collect(LinRange(30., 50., n_steps))
-    "TiO2"  => collect(LinRange( 0.,  2., n_steps))
-    "Al2O3" => collect(LinRange( 5., 10., n_steps))
-    "Cr2O3" => collect(LinRange( 0.,  2., n_steps))
-    "FeO"   => collect(LinRange( 5., 10., n_steps))
-    "MgO"   => collect(LinRange( 7., 12., n_steps))
-    "CaO"   => collect(LinRange( 7., 12., n_steps))
-    "Na2O"  => collect(LinRange( 2.,  8., n_steps))
-    "K2O"   => collect(LinRange( 0.,  2., n_steps))
-    "O"     => collect(LinRange( 1., 10., n_steps))
+    "SiO2"  => collect(LinRange(30., 50., n_steps)),
+    "TiO2"  => collect(LinRange( 0.,  2., n_steps)),
+    "Al2O3" => collect(LinRange( 5., 10., n_steps)),
+    "Cr2O3" => collect(LinRange( 0.,  2., n_steps)),
+    "FeO"   => collect(LinRange( 5., 10., n_steps)),
+    "MgO"   => collect(LinRange( 7., 12., n_steps)),
+    "CaO"   => collect(LinRange( 7., 12., n_steps)),
+    "Na2O"  => collect(LinRange( 2.,  8., n_steps)),
+    "K2O"   => collect(LinRange( 0.,  2., n_steps)),
+    "O"     => collect(LinRange( 1., 10., n_steps)),
     "H2O"   => collect(LinRange( 0., 10., n_steps))
 )
 ```
@@ -212,5 +212,38 @@ variable_inputs["bulk"] = OrderedDict(
 The bulk compositions defined in the previous snippet do not represent realistic compositions. A more realistic scenario would be assessing the impact of analytical uncertainty in the bulk composition on the results of fractional crystallisation models. FCEnsemble has a function specially designed for this. The function `generate_bulk_mc` accepts two dictionaries, one defining a bulk composition as above, and a second containing corresponding absolute uncertainties. It produces a vector `n_samples` long for each oxide where each value is randomly sampled from a normal distribution defined by the measured value and its analytical uncertainty.
 
 ```Julia
+bulk = OrderedDict(
+    "SiO2"  => 44.66,
+    "TiO2"  =>  1.42,
+    "Al2O3" => 15.90,
+    "Cr2O3" =>  0.00,
+    "FeO"   => 11.41,
+    "MgO"   =>  7.79,
+    "CaO"   => 11.24,
+    "Na2O"  =>  2.74,
+    "K2O"   =>  0.22,
+    "O"     =>  4.00,
+    "H2O"   =>  0.00
+)
 
+abs_unc = OrderedDict(
+    "SiO2"  => 2.333,
+    "TiO2"  => 0.142,
+    "Al2O3" => 0.795,
+    "Cr2O3" => 0.0,
+    "FeO"   => 0.571,
+    "MgO"   => 0.390,
+    "CaO"   => 0.562,
+    "Na2O"  => 0.137,
+    "K2O"   => 0.022,
+    "O"     => 0.0,
+    "H2O"   => 0.0
+)
+
+n_samples = 5
+
+bulk_mc = MonteCarloBulk.generate_bulk_mc(bulk, abs_unc, n_samples)
 ```
+
+Each oxide in `bulk_mc` is then a vector containing 5 floats. Those values with an uncertainty of 0.0 are simply copied `n_samples` times.
+The function automatically replaces any negative values produced by the sampling by 0.0. The resulting dictionary can be input as a `variable_input` to assess how the analytical uncertainty impacts the fractional crystallisation simulations.

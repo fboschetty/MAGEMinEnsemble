@@ -56,4 +56,4 @@ sys_in = "wt"
 # output_folder = ""
 
 # Run the simulations
-GenerateEnsemble.run_simulations(T_array, constant_inputs, variable_inputs, sys_in)
+results = GenerateEnsemble.run_simulations(T_array, constant_inputs, variable_inputs, sys_in, "/Users/felixboschetty/Documents/Julia/Test_Output/")

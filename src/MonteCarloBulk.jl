@@ -43,7 +43,7 @@ function generate_bulk_mc(bulk::AbstractDict{String, Float64}, abs_unc::Abstract
             bulk_mc[string(oxide)] = samples
         else
             # If no matching abs_unc value is found for this oxide, throw error
-            error("No matching standard deviation for oxide: $oxide")
+            error("No matching uncertainty for oxide: $oxide")
         end
     end
 

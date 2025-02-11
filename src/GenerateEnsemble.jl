@@ -11,7 +11,7 @@ using .InputValidation
 
 
 """
-    run_simulations(T_array, constant_inputs, variable_inputs, sys_in)
+    results = run_simulations(T_array, constant_inputs, variable_inputs, sys_in)
 
 Generates and runs simulation ensembles from intensive variable grid.
 Extracts inputs from constant and variable_inputs, performs simulations, and saves the outputs to appropriately named .csv and metadata files.
@@ -21,8 +21,9 @@ Inputs:
     - constant_inputs (Dict): Intensive variables, excluding T, that remain constant across simulation ensemble.
     - variable_inputs (Dict): Intensive variables, excluding T, that vary across the simulation ensemble.
     - sys_int (String): Indicate units for input bulk composition. E.g., "wt" for weight percent, "mol" for mole percent.
+    - output_dir (String): Path to save output directory to (defaults to current directory).
 """
-function run_simulations(T_array::Vector{Float64}, constant_inputs::Dict{Any, Any}, variable_inputs::Dict{Any, Any}, sys_in::String)
+function run_simulations(T_array::Vector{Float64}, constant_inputs::Dict{Any, Any}, variable_inputs::Dict{Any, Any}, sys_in::String, output_dir::String="") :: Dict
     # Prepare the inputs
     max_steps = length(T_array)
     combined_inputs = InputValidation.prepare_inputs(constant_inputs, variable_inputs)
@@ -32,6 +33,18 @@ function run_simulations(T_array::Vector{Float64}, constant_inputs::Dict{Any, An
     combinations = IterTools.product(values(variable_inputs)...)
 
     println("Performing $n_sim fractional crystallisation simulations...")
+
+    # Use current directory if no output_directory is provided
+    if output_dir == "" || output_dir == nothing
+        output_dir = pwd()  # current directory
+    end
+
+    # Ensure the output directory exists
+    if !isdir(output_dir)
+        mkdir(output_dir)
+    end
+
+    results = Dict{String, Any}()
 
     for combination in combinations
         # Update combined inputs with the current combination of variable inputs
@@ -64,11 +77,18 @@ function run_simulations(T_array::Vector{Float64}, constant_inputs::Dict{Any, An
         # Generate output filename
         output_file = join([string(collect(keys(variable_inputs))[i], "=", combination[i]) for i in eachindex(combination)], "_")
 
+        # Join the output directory and file name
+        output_file_path = joinpath(output_dir, "$output_file.csv")
+
         # Save simulation data
-        MAGEMin_data2dataframe(output, "ig", output_file)
+        MAGEMin_data2dataframe(output, "ig", output_file_path)
+
+        results[output_file] = output
     end
 
     println("Done!")
+
+    return results
 end
 
 export run_simulations
