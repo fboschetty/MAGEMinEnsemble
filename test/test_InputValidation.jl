@@ -15,7 +15,7 @@ using .InputValidation
     @test InputValidation.check_constant_inputs_dict(constant_inputs_odict) === nothing
 
     # Test constant inputs not dictionary (should throw error)
-    @test_throws ArgumentError InputValidation.check_constant_inputs_dict([1, 2, 3])
+    @test_throws MethodError InputValidation.check_constant_inputs_dict([1, 2, 3])
 
     # Test variable inputs is a dictionary
     variable_inputs_dict = Dict()
@@ -26,7 +26,7 @@ using .InputValidation
     @test InputValidation.check_variable_inputs_dict(variable_inputs_odict) === nothing
 
     # Test variable inputs not dictionary (should throw error)
-    @test_throws ArgumentError InputValidation.check_variable_inputs_dict([1, 2, 3])
+    @test_throws MethodError InputValidation.check_variable_inputs_dict([1, 2, 3])
 
 end
 
@@ -114,12 +114,98 @@ end
 
 end
 
+@testset "Check_matching_bulk_oxides" begin
+    # Test case 1: Matching oxides (should raise an error)
+    constant_inputs_1 = Dict("bulk" => OrderedDict("SiO2" => 53.0))
+    variable_inputs_1 = Dict("bulk" => OrderedDict("SiO2" => [52.0, 54.0]))
+    @test_throws ErrorException InputValidation.check_matching_bulk_oxides(constant_inputs_1, variable_inputs_1)
+
+    # Test case 2: No matching oxides (should pass without errors)
+    constant_inputs_2 = Dict("bulk" => OrderedDict("SiO2" => 53.0))
+    variable_inputs_2 = Dict("bulk" => OrderedDict("FeO" => [9.0, 10.0]))
+    @test InputValidation.check_matching_bulk_oxides(constant_inputs_2, variable_inputs_2)  === nothing
+
+    # Test case 3: No 'bulk' key in constant_inputs (should pass without errors)
+    constant_inputs_3 = Dict("P" => [1.0, 2.0])  # No "bulk" key here
+    variable_inputs_3 = Dict("bulk" => OrderedDict("SiO2" => [52.0, 54.0]))
+    @test InputValidation.check_matching_bulk_oxides(constant_inputs_3, variable_inputs_3) === nothing
+
+    # Test case 4: No 'bulk' key in variable_inputs (should pass without errors)
+    constant_inputs_4 = Dict("bulk" => OrderedDict("SiO2" => 53.0))
+    variable_inputs_4 = Dict("P" => [1.0, 2.0])  # No "bulk" key here
+    @test InputValidation.check_matching_bulk_oxides(constant_inputs_4, variable_inputs_4) === nothing
+end
+
+@testset "Combine constant and variable bulk" begin
+    # Test 1: Constant_inputs has the "bulk" key only
+    constant_inputs = Dict("bulk" => OrderedDict("SiO2" => 53.0))
+    variable_inputs = Dict()
+
+    expected_constant_inputs = Dict("bulk" => OrderedDict("SiO2" => 53.0))
+    expected_variable_inputs = Dict()
+
+    result_constant_inputs, result_variable_inputs = InputValidation.combine_bulk_compositions!(constant_inputs, variable_inputs)
+
+    @test result_constant_inputs == expected_constant_inputs
+    @test result_variable_inputs == expected_variable_inputs
+
+    # Test 2: Variable_inputs has the "bulk" key only
+    constant_inputs = Dict()
+    variable_inputs = Dict("bulk" => OrderedDict("Al2O3" => [11.0, 12.0, 13.0]))
+
+    expected_constant_inputs = Dict()
+    expected_variable_inputs = Dict("bulk" => OrderedDict("Al2O3" => [11.0, 12.0, 13.0]))
+
+    result_constant_inputs, result_variable_inputs = InputValidation.combine_bulk_compositions!(constant_inputs, variable_inputs)
+
+    @test result_constant_inputs == expected_constant_inputs
+    @test result_variable_inputs == expected_variable_inputs
+
+    # Test 3: Both constant_inputs and variable_inputs have the "bulk" key only
+    constant_inputs = Dict("bulk" => OrderedDict("SiO2" => 53.0))
+    variable_inputs = Dict("bulk" => OrderedDict("Al2O3" => [11.0, 12.0, 13.0]))
+
+    expected_constant_inputs = Dict()
+    expected_variable_inputs = Dict("bulk" => OrderedDict("SiO2" => [53.0, 53.0, 53.0], "Al2O3" => [11.0, 12.0, 13.0]))
+
+    result_constant_inputs, result_variable_inputs = InputValidation.combine_bulk_compositions!(constant_inputs, variable_inputs)
+
+    @test result_constant_inputs == expected_constant_inputs
+    @test result_variable_inputs == expected_variable_inputs
+
+    # Test 4: constant_inputs has bulk and P, variable inputs has bulk. Check P remains in constant.
+    constant_inputs = Dict("bulk" => OrderedDict("SiO2" => 53.0), "P" => 2.0)
+    variable_inputs = Dict("bulk" => OrderedDict("Al2O3" => [11.0, 12.0, 13.0]))
+
+    expected_constant_inputs = Dict("P" => 2.0)
+    expected_variable_inputs = Dict("bulk" => OrderedDict("SiO2" => [53.0, 53.0, 53.0], "Al2O3" => [11.0, 12.0, 13.0]))
+
+    result_constant_inputs, result_variable_inputs = InputValidation.combine_bulk_compositions!(constant_inputs, variable_inputs)
+
+    @test result_constant_inputs == expected_constant_inputs
+    @test result_variable_inputs == expected_variable_inputs
+
+    # Test 4: constant_inputs has bulk and P, variable inputs has bulk and buffer_offset. Check P remains in constant, buffer in variable.
+    constant_inputs = Dict("bulk" => OrderedDict("SiO2" => 53.0), "P" => 2.0)
+    variable_inputs = Dict("bulk" => OrderedDict("Al2O3" => [11.0, 12.0, 13.0]), "buffer_offset" => [1.0, 2.0])
+
+    expected_constant_inputs = Dict("P" => 2.0)
+    expected_variable_inputs = Dict("bulk" => OrderedDict("SiO2" => [53.0, 53.0, 53.0], "Al2O3" => [11.0, 12.0, 13.0]), "buffer_offset" => [1.0, 2.0])
+
+    result_constant_inputs, result_variable_inputs = InputValidation.combine_bulk_compositions!(constant_inputs, variable_inputs)
+
+    @test result_constant_inputs == expected_constant_inputs
+    @test result_variable_inputs == expected_variable_inputs
+
+end
+
+
 # Test for validation of keys in constant and variable inputs
 @testset "Key validation" begin
+    # Test no common keys
     constant_inputs = Dict("bulk" => Dict("SiO2" => 53.0), "P" => 1.0)
     variable_inputs = Dict("buffer" => "qfm")
 
-    # Test no common keys
     @test InputValidation.validate_keys(constant_inputs, variable_inputs) === nothing
 
     # Test common keys (should trigger an error)
@@ -131,91 +217,91 @@ end
 
 # Test for bulk composition and pressure validation
 @testset "Composition and pressure validation" begin
-    combined_inputs = Dict("bulk" => Dict("SiO2" => 53.0), "P" => 1.0)
+    all_inputs = Dict("bulk" => Dict("SiO2" => 53.0), "P" => 1.0)
 
     # Test that bulk composition and pressure are defined
-    @test InputValidation.validate_compositions_and_pressure(combined_inputs) === nothing
+    @test InputValidation.validate_compositions_and_pressure(all_inputs) === nothing
 
     # Test missing bulk composition (should trigger an error)
-    combined_inputs_no_bulk = Dict("P" => 1.0)
-    @test_throws ErrorException InputValidation.validate_compositions_and_pressure(combined_inputs_no_bulk)
+    all_inputs_no_bulk = Dict("P" => 1.0)
+    @test_throws ErrorException InputValidation.validate_compositions_and_pressure(all_inputs_no_bulk)
 
     # Test missing pressure (should trigger an error)
-    combined_inputs_no_pressure = Dict("bulk" => Dict("SiO2" => 53.0))
-    @test_throws ErrorException InputValidation.validate_compositions_and_pressure(combined_inputs_no_pressure)
+    all_inputs_no_pressure = Dict("bulk" => Dict("SiO2" => 53.0))
+    @test_throws ErrorException InputValidation.validate_compositions_and_pressure(all_inputs_no_pressure)
 end
 
 # Test for oxides validation
 @testset "Oxide validation" begin
-    combined_inputs_valid = Dict()
-    combined_inputs_valid["P"] = 1.0
-    combined_inputs_valid["bulk"] = Dict("SiO2" => 38.4, "TiO2" => 0.7, "Al2O3" => 7.7, "Cr2O3" => 0.0,
+    all_inputs_valid = Dict()
+    all_inputs_valid["P"] = 1.0
+    all_inputs_valid["bulk"] = Dict("SiO2" => 38.4, "TiO2" => 0.7, "Al2O3" => 7.7, "Cr2O3" => 0.0,
                                          "FeO" => 5.98, "MgO" => 9.95, "CaO" => 8.25, "Na2O" => 2.26,
                                          "K2O" => 0.24, "O" => 4.0, "H2O" => 12.7)
     # Test valid oxides
-    @test InputValidation.validate_oxides(combined_inputs_valid) === nothing
+    @test InputValidation.validate_oxides(all_inputs_valid) === nothing
 
     # Test incompatible oxides (O and Fe2O3 together, should trigger an error)
-    combined_inputs_invalid_oxides = Dict("bulk" => Dict("O" => 1.0, "Fe2O3" => 1.0), "P" => 1.0)
-    @test_throws ErrorException InputValidation.validate_oxides(combined_inputs_invalid_oxides)
+    all_inputs_invalid_oxides = Dict("bulk" => Dict("O" => 1.0, "Fe2O3" => 1.0), "P" => 1.0)
+    @test_throws ErrorException InputValidation.validate_oxides(all_inputs_invalid_oxides)
 
     # Test invalid oxide (should trigger an error)
-    combined_inputs_invalid_oxide = Dict("bulk" => Dict("CuO" => 1.0), "P" => 1.0)
-    @test_throws ErrorException InputValidation.validate_oxides(combined_inputs_invalid_oxide)
+    all_inputs_invalid_oxide = Dict("bulk" => Dict("CuO" => 1.0), "P" => 1.0)
+    @test_throws ErrorException InputValidation.validate_oxides(all_inputs_invalid_oxide)
 
     # Test missing oxide (should trigger an error)
-    combined_inputs_missing_oxide = Dict("bulk" => Dict("SiO2" => 53.0), "P" => 1.0)
-    @test_throws ErrorException InputValidation.validate_oxides(combined_inputs_missing_oxide)
+    all_inputs_missing_oxide = Dict("bulk" => Dict("SiO2" => 53.0), "P" => 1.0)
+    @test_throws ErrorException InputValidation.validate_oxides(all_inputs_missing_oxide)
 
 end
 
 # Test for bulk composition and pressure constraints
 @testset "Bulk and pressure constraints validation" begin
-    combined_inputs_valid = Dict("bulk" => Dict("SiO2" => 53.0), "P" => 1.0)
+    all_inputs_valid = Dict("bulk" => Dict("SiO2" => 53.0), "P" => 1.0)
 
     # Test valid bulk and pressure constraints
-    @test InputValidation.validate_bulk_and_pressure(combined_inputs_valid) === nothing
+    @test InputValidation.validate_bulk_and_pressure(all_inputs_valid) === nothing
 
     # Test pressure 0 kbar conversion to 0.001 kbar
-    combined_inputs_P_0 = Dict("bulk" => Dict("SiO2" => 53.0), "P" => 0.0)
+    all_inputs_P_0 = Dict("bulk" => Dict("SiO2" => 53.0), "P" => 0.0)
     try
-        InputValidation.validate_bulk_and_pressure(combined_inputs_P_0)
-        @test combined_inputs_P_0["P"] == 0.001
+        InputValidation.validate_bulk_and_pressure(all_inputs_P_0)
+        @test all_inputs_P_0["P"] == 0.001
         true
     catch e
         false
     end
 
     # Test oxide 0 wt% conversion to 0.001 wt%
-    combined_inputs_Bulk_0 = Dict("bulk" => Dict("SiO2" => 0.), "P" => 1.0)
+    all_inputs_Bulk_0 = Dict("bulk" => Dict("SiO2" => 0.), "P" => 1.0)
     try
-        InputValidation.validate_bulk_and_pressure(combined_inputs_Bulk_0)
-        @test combined_inputs_Bulk_0["bulk"]["SiO2"] == 0.001
+        InputValidation.validate_bulk_and_pressure(all_inputs_Bulk_0)
+        @test all_inputs_Bulk_0["bulk"]["SiO2"] == 0.001
         true
     catch e
         false
     end
 
     # Test invalid bulk composition
-    combined_inputs_invalid_bulk = Dict("bulk" => Dict("SiO2" => -0.1), "P" => 1.0)
-    @test_throws ErrorException InputValidation.validate_bulk_and_pressure(combined_inputs_invalid_bulk)
+    all_inputs_invalid_bulk = Dict("bulk" => Dict("SiO2" => -0.1), "P" => 1.0)
+    @test_throws ErrorException InputValidation.validate_bulk_and_pressure(all_inputs_invalid_bulk)
 
     # Test invalid pressure value (should trigger an error)
-    combined_inputs_invalid_pressure = Dict("bulk" => Dict("SiO2" => 53.0), "P" => [-1.0])
-    @test_throws ErrorException InputValidation.validate_bulk_and_pressure(combined_inputs_invalid_pressure)
+    all_inputs_invalid_pressure = Dict("bulk" => Dict("SiO2" => 53.0), "P" => [-1.0])
+    @test_throws ErrorException InputValidation.validate_bulk_and_pressure(all_inputs_invalid_pressure)
 
 end
 
 # Test for buffer validation
 @testset "Buffer validation" begin
-    combined_inputs_valid_buffer = Dict("buffer" => "qfm", "P" => 1.0, "bulk" => Dict("SiO2" => 53.0))
+    all_inputs_valid_buffer = Dict("buffer" => "qfm", "P" => 1.0, "bulk" => Dict("SiO2" => 53.0))
 
     # Test valid buffer
-    @test InputValidation.validate_buffer(combined_inputs_valid_buffer) === nothing
+    @test InputValidation.validate_buffer(all_inputs_valid_buffer) === nothing
 
     # Test invalid buffer (should trigger an error)
-    combined_inputs_invalid_buffer = Dict("buffer" => "invalid_buffer", "P" => 1.0, "bulk" => Dict("SiO2" => 53.0))
-    @test_throws ErrorException InputValidation.validate_buffer(combined_inputs_invalid_buffer)
+    all_inputs_invalid_buffer = Dict("buffer" => "invalid_buffer", "P" => 1.0, "bulk" => Dict("SiO2" => 53.0))
+    @test_throws ErrorException InputValidation.validate_buffer(all_inputs_invalid_buffer)
 
 end
 

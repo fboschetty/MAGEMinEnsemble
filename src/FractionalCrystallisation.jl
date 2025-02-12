@@ -17,40 +17,54 @@ Inputs
     - bulk_init (Vector{Float64}): Initial bulk composition.
     - database: MAGEMin database for simulations. For example, "ig" is the igneous database of Holland et al., 2018.
     - oxides (Vector{String}): Oxides that correspond to values in the bulk composition. See MAGEMin documentation for accepted oxides.
-    - max_steps (Int): The maximum number of simulations to perform. Usually determined by number of temperature steps.
     - sys_in (String): Unit for initial bulk composition, can be "wt" or "mol", for wt(defaults to "wt")
 
 Outputs
     - Out (Vector{MAGEMin_C.gmin_struct{Float64, Int64}}): array of simulation outputs for each temperature step.
 """
-function fractional_crystallisation(T_array, P, bulk_init, database, oxides, max_steps, sys_in, fo2_offset)
+function fractional_crystallisation(T_array::Vector{Float64}, P::Float64, bulk_init::Vector{Float64}, database, oxides::Vector{String}, sys_in::String, offset::Union{Float64, Nothing})
     P_array = fill(P, length(T_array))
     melt_fraction = 1.0
     bulk = deepcopy(bulk_init)
-    temperature_step = 1
+    max_T_steps = length(T_array)
+    current_T_step = 1
 
-    output = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef, max_steps)
+    output = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef, max_T_steps)
 
-    while melt_fraction > 0.0 && temperature_step <= max_steps
-        # Run the minimization for the current step
-        out = single_point_minimization(
-            P_array[temperature_step],
-            T_array[temperature_step],
-            database,
-            X=bulk,
-            Xoxides=oxides,
-            sys_in=sys_in,
-            B=fo2_offset
-            )
-        output[temperature_step] = deepcopy(out)
+    while melt_fraction > 0.0 && current_T_step <= max_T_steps
+        if offset === nothing
+            out = single_point_minimization(
+                P_array[current_T_step],
+                T_array[current_T_step],
+                database,
+                X=bulk,
+                Xoxides=oxides,
+                sys_in=sys_in,
+                )
+        else
+
+            out = single_point_minimization(
+                P_array[current_T_step],
+                T_array[current_T_step],
+                database,
+                X=bulk,
+                Xoxides=oxides,
+                sys_in=sys_in,
+                B=offset
+                )
+        end
+
+        # Write T_step to output
+        output[current_T_step] = deepcopy(out)
 
         # Retrieve melt composition for next iteration
         melt_fraction = out.frac_M
         bulk .= out.bulk_M
-        temperature_step += 1
+        current_T_step += 1
+
     end
 
-    return output[1:temperature_step-1]  # Return only defined indices
+    return output[1:current_T_step-1]  # Return only defined indices
 end
 
 export fractional_crystallisation

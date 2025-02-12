@@ -1,10 +1,10 @@
 push!(LOAD_PATH, joinpath(@__DIR__, "../src"))
-using FCEnsemble
+using MAGEMinEnsemble
 
 import Documenter
 
 makedocs(
     sitename="My Documentation",
-    repo = "https://github.com/fboschetty/FCEnsemble",
-    modules = [FCEnsemble]
+    repo = "https://github.com/fboschetty/MAGEMinEnsemble",
+    modules = [MAGEMinEnsemble]
     )

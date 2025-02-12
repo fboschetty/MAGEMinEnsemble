@@ -1,0 +1,7 @@
+name = "MAGEMinEnsemble"
+uuid = "d45110d1-ccdb-47d7-b023-d254dfea66ea"
+authors = "Felix Boschetty <felix.boschetty@manchester.ac.uk>"
+repo = "https://github.com/fboschetty/MAGEMinEnsemble"
+version = "0.0.1"
+
+[deps]

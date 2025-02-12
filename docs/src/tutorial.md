@@ -2,14 +2,14 @@
 
 The goals of this tutorial are as follows:
 1. Provide a brief introduction to MAGEMin, and
-2. Demonstrate the key functionality of FCEnsemble and provide simple examples of its usage.
+2. Demonstrate the key functionality of MAGEMinEnsemble and provide simple examples of its usage.
 
 ## Mineral Assemblage Gibbs Energy Minimization (MAGEMin)
 `MAGEMin` is a parallel C library that finds the thermodynamically most stable assemblage for a given bulk rock composition and intensive variables e.g., temperature and pressure. It utilises modern minimisation techniques and optimised for multi-core processors meaning it is both stable and fast.
 
 It utilises existing thermodynamic databases allowing it to perform calculations across a broad compositional and intensive variable space. See the [MAGEMin Github](https://github.com/ComputationalThermodynamics/MAGEMin) and [companion paper](https://doi.org/10.1029/2022GC010427) for further details.
 
-`MAGEMin_C` is a Julia wrapper for `MAGEMin` and provides a more user-friendly interface for performing simulations using `MAGEMin`, and is utilised by FCEnsemble for performing many fractional-crystallisation simulations.
+`MAGEMin_C` is a Julia wrapper for `MAGEMin` and provides a more user-friendly interface for performing simulations using `MAGEMin`, and is utilised by MAGEMinEnsemble for performing many fractional-crystallisation simulations.
 
 ## Single Calculations
 
@@ -48,7 +48,7 @@ Finalize_MAGEMin(data)
 
 Performing many (1,000s) of simulations across a varied intensive parameter space is less straightforward. Moreover, fractional crystallisation simulations require that the melt at each temperature state is used for subsequent, down-temperature, steps. Therefore each temperature step cannot be performed in parallel. Finally, storing the output of these many simulations allowing them to be subsequently explored is non-trivial.
 
-FCEnsemble provides a simple means to define a intensive variable space over which to perform a series of fractional crystallisation experiments. The user defines a temperature array (`T_array`); `constant_inputs`, intensive variables that are the same across the defined parameter space; and `variable_inputs`, those that define the extent of the parameter extent.
+MAGEMinEnsemble provides a simple means to define a intensive variable space over which to perform a series of fractional crystallisation experiments. The user defines a temperature array (`T_array`); `constant_inputs`, intensive variables that are the same across the defined parameter space; and `variable_inputs`, those that define the extent of the parameter extent.
 
 ```Julia
 using MAGEMin_C
@@ -209,7 +209,7 @@ variable_inputs["bulk"] = OrderedDict(
 
 ## Monte Carlo Uncertainty Propagation of Bulk Compositions
 
-The bulk compositions defined in the previous snippet do not represent realistic compositions. A more realistic scenario would be assessing the impact of analytical uncertainty in the bulk composition on the results of fractional crystallisation models. FCEnsemble has a function specially designed for this. The function `generate_bulk_mc` accepts two dictionaries, one defining a bulk composition as above, and a second containing corresponding absolute uncertainties. It produces a vector `n_samples` long for each oxide where each value is randomly sampled from a normal distribution defined by the measured value and its analytical uncertainty.
+The bulk compositions defined in the previous snippet do not represent realistic compositions. A more realistic scenario would be assessing the impact of analytical uncertainty in the bulk composition on the results of fractional crystallisation models. MAGEMinEnsemble has a function specially designed for this. The function `generate_bulk_mc` accepts two dictionaries, one defining a bulk composition as above, and a second containing corresponding absolute uncertainties. It produces a vector `n_samples` long for each oxide where each value is randomly sampled from a normal distribution defined by the measured value and its analytical uncertainty.
 
 ```Julia
 bulk = OrderedDict(

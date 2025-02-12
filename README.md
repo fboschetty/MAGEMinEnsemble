@@ -1,8 +1,8 @@
-# FCEnsemble.jl
+# MAGEMinEnsemble.jl
 
-FCEnsemble is a Julia-based software designed to perform an ensemble of fractional crystallisation simulations across a defined intensive variable space. It utilises the Julia wrapper of [MAGEMin](https://github.com/ComputationalThermodynamics/MAGEMin_C.jl) to perform these simulations. The software is heavily inspired by Zack Gainsforth's [alphaMELTSEnsemble](https://github.com/ZGainsforth/alphaMELTSEnsemble), which similarly performs a series of thermodynamic simulations of magmatic systems using alphaMELTS.
+MAGEMinEnsemble is a Julia-based software designed to perform an ensemble of fractional crystallisation simulations across a defined intensive variable space. It utilises the Julia wrapper of [MAGEMin](https://github.com/ComputationalThermodynamics/MAGEMin_C.jl) to perform these simulations. The software is heavily inspired by Zack Gainsforth's [alphaMELTSEnsemble](https://github.com/ZGainsforth/alphaMELTSEnsemble), which similarly performs a series of thermodynamic simulations of magmatic systems using alphaMELTS.
 
-The key features FCEnsemble provides are:
+The key features MAGEMinEnsemble provides are:
 - Constant and variable intensive parameters are defined in simple dictionaries.
 - An ensemble of fractional crystallisation simulations is assembled and ran across the defined parameter space.
 - Multi-threading to perform simulations in parallel.
