@@ -29,10 +29,10 @@ if T_start > T_stop
 end
 T_array = collect(range(start=T_start, stop=T_stop, step=T_step))
 
-constant_inputs = Dict()
+constant_inputs = OrderedDict()
 constant_inputs["buffer"] = "qfm"
-constant_inputs["offset"] = 2.0
-# constant_inputs["P"] = 0.0
+# constant_inputs["offset"] = 2.0
+constant_inputs["P"] = 1.0
 constant_inputs["bulk"] = OrderedDict(
     "SiO2" => 38.4,
     "TiO2" => 0.7,
@@ -47,16 +47,16 @@ constant_inputs["bulk"] = OrderedDict(
     "H2O" => 12.7,
 )
 
-variable_inputs = Dict()
-# variable_inputs["bulk"] = OrderedDict(
-#     "H2O" => collect(range(start=0.0, stop=6.0, step=1.0))
-# )
-variable_inputs["P"] = collect(range(0.0, 2.0, step=0.5))  # Pressure in kbar.
-# variable_inputs["fo2_offset"] = collect(range(-2.0, 2.0, step=1.0))
+variable_inputs = OrderedDict()
+variable_inputs["bulk"] = OrderedDict(
+    "H2O" => collect(range(start=0.0, stop=6.0, step=1.0))
+)
+# variable_inputs["P"] = collect(range(0.0, 1.0, step=1.0))  # Pressure in kbar.
+# variable_inputs["offset"] = collect(range(0.0, 1.0, step=1.0))
 
 # Define parameters for simulation
 sys_in = "wt"
-output_folder = "/Users/felixboschetty/Documents/Julia/Test_Output/"
+output_dir = "/Users/felixboschetty/Documents/Julia/Test_Output2/"
 
 # Run the simulations
-results = GenerateEnsemble.run_simulations(T_array, constant_inputs, variable_inputs, sys_in, output_folder)
+results = GenerateEnsemble.run_simulations(T_array, constant_inputs, variable_inputs, sys_in, output_dir)
