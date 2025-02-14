@@ -8,7 +8,7 @@ using OrderedCollections
 
 Check the contents of constant_inputs for typing, ensure that numeric values are Float64.
 """
-function check_constant_inputs_values(constant_inputs::OrderedDict)
+function check_constant_inputs_values(constant_inputs::OrderedDict)::Nothing
     for (key, value) in constant_inputs
         if key == "buffer"
             # "buffer" must be a string
@@ -29,7 +29,7 @@ end
 
 Check that variable inputs are Vectors.
 """
-function check_variable_inputs_vectors(variable_inputs::OrderedDict)
+function check_variable_inputs_vectors(variable_inputs::OrderedDict)::Nothing
     for (key, value) in variable_inputs
 
         if !isa(value, AbstractVector)
@@ -44,7 +44,7 @@ end
 
 Check that list of required inputs is defined in either constant_inputs or variable_inputs
 """
-function check_required_inputs(constant_inputs::OrderedDict, variable_inputs::OrderedDict)
+function check_required_inputs(constant_inputs::OrderedDict, variable_inputs::OrderedDict)::Nothing
     required_inputs = ["P"]
 
     # Check if each required input is present in either constant_inputs or variable_inputs
@@ -61,7 +61,7 @@ end
 
 Check no keys are defined in both constant and variable inputs.
 """
-function check_matching_keys(constant_inputs::OrderedDict, variable_inputs::OrderedDict)
+function check_matching_keys(constant_inputs::OrderedDict, variable_inputs::OrderedDict)::Nothing
     # Check for matching keys between constant and variable inputs
     common_keys = intersect(keys(variable_inputs), keys(constant_inputs))
     if !isempty(common_keys)
@@ -76,7 +76,7 @@ end
 
 Returns keys in an ordered dictionary (`od`) that contain a capital "O".
 """
-function check_keys_oxygen(od::OrderedDict)
+function check_keys_oxygen(od::OrderedDict)::Vector{String}
     oxides = []
     for key in keys(od)
         if occursin("O", key)  # Checks if "O" appears in the key
@@ -92,7 +92,7 @@ end
 
 Ensure that the defined bulk composition has the correct oxides included. Provides error messages that identify missing or extraneous oxides.
 """
-function validate_oxides(constant_inputs::OrderedDict, variable_inputs::OrderedDict)
+function validate_oxides(constant_inputs::OrderedDict, variable_inputs::OrderedDict)::Nothing
     # Define the accepted oxides for MAGEMin
     accepted_oxides = ["SiO2", "TiO2", "Al2O3", "Cr2O3", "FeO", "MgO", "CaO", "Na2O", "K2O", "H2O", "O", "Fe2O3"]
 
@@ -132,7 +132,7 @@ end
 
 Ensures that defined pressure value(s) are positive. Throws an error if they are negative.
 """
-function validate_positive_pressure(constant_inputs::OrderedDict, variable_inputs::OrderedDict)
+function validate_positive_pressure(constant_inputs::OrderedDict, variable_inputs::OrderedDict)::Nothing
     # Check for pressure in constant_inputs
     if haskey(constant_inputs, "P")
         P = [constant_inputs["P"]]
@@ -155,7 +155,7 @@ end
 
 Ensures that defined oxide values are positive. Throws an error if they are negative.
 """
-function validate_positive_oxides(constant_inputs::OrderedDict, variable_inputs::OrderedDict)
+function validate_positive_oxides(constant_inputs::OrderedDict, variable_inputs::OrderedDict)::Nothing
 
     constant_oxides = check_keys_oxygen(constant_inputs)
     variable_oxides = check_keys_oxygen(variable_inputs)
@@ -181,43 +181,56 @@ end
 
 Replaces pressures defined as 0.0 with 0.001
 """
-function replace_zero_pressure!(constant_inputs::OrderedDict, variable_inputs::OrderedDict)
-    # Check for pressure in constant_inputs
-    if haskey(constant_inputs, "P")
-        if constant_inputs["P"] == 0.0
-            constant_inputs["P"] = 0.001
+function replace_zero_pressure(constant_inputs::OrderedDict, variable_inputs::OrderedDict)::Tuple{OrderedDict, OrderedDict}
+    # Create copies of the input dictionaries to avoid mutation
+    new_constant_inputs = copy(constant_inputs)
+    new_variable_inputs = copy(variable_inputs)
+
+    # Check for pressure in new_constant_inputs
+    if haskey(new_constant_inputs, "P")
+        if new_constant_inputs["P"] == 0.0
+            new_constant_inputs["P"] = 0.001
         end
     end
 
-    # Check for pressure in variable_inputs
-    if haskey(variable_inputs, "P")
-        variable_inputs["P"] .= replace(variable_inputs["P"], 0.0 => 0.001)
+    # Check for pressure in new_variable_inputs
+    if haskey(new_variable_inputs, "P")
+        new_variable_inputs["P"] .= replace(new_variable_inputs["P"], 0.0 => 0.001)
     end
+
+    return new_constant_inputs, new_variable_inputs
 end
 
 
 """
-    replace_zero_oxides!(constant_inputs, variable_inputs)
+    new_constant_inputs, new_variable_inputs = replace_zero_oxides!(constant_inputs, variable_inputs)
 
 Replaces oxides, except H2O, defined as 0.0 with 0.001.
 """
-function replace_zero_oxides!(constant_inputs::OrderedDict, variable_inputs::OrderedDict)
-    constant_oxides = check_keys_oxygen(constant_inputs)
-    variable_oxides = check_keys_oxygen(variable_inputs)
+function replace_zero_oxides(constant_inputs::OrderedDict, variable_inputs::OrderedDict)::Tuple{OrderedDict, OrderedDict}
+    # Create copies of the input dictionaries to avoid mutation
+    new_constant_inputs = copy(constant_inputs)
+    new_variable_inputs = copy(variable_inputs)
 
-    # Replace 0.0 with 0.001 for oxides in constant_inputs
+    # Get the oxide keys
+    constant_oxides = check_keys_oxygen(new_constant_inputs)
+    variable_oxides = check_keys_oxygen(new_variable_inputs)
+
+    # Replace 0.0 with 0.001 for oxides in new_constant_inputs
     for oxide in constant_oxides
-        if haskey(constant_inputs, oxide) && constant_inputs[oxide] == 0.0 && oxide != "H2O"
-            constant_inputs[oxide] = 0.001
+        if haskey(new_constant_inputs, oxide) && new_constant_inputs[oxide] == 0.0 && oxide != "H2O"
+            new_constant_inputs[oxide] = 0.001
         end
     end
 
-    # Replace 0.0 with 0.001 for oxides in variable_inputs
+    # Replace 0.0 with 0.001 for oxides in new_variable_inputs
     for oxide in variable_oxides
-        if haskey(variable_inputs, oxide) && oxide != "H2O"
-            variable_inputs[oxide] .= replace(variable_inputs[oxide], 0.0 => 0.001)
+        if haskey(new_variable_inputs, oxide) && oxide != "H2O"
+            new_variable_inputs[oxide] .= replace(new_variable_inputs[oxide], 0.0 => 0.001)
         end
     end
+
+    return new_constant_inputs, new_variable_inputs
 end
 
 
@@ -226,7 +239,7 @@ end
 
 Ensure that provided buffer string(s) is permitted by MAGEMin.
 """
-function validate_buffer(constant_inputs::OrderedDict, variable_inputs::OrderedDict)
+function validate_buffer(constant_inputs::OrderedDict, variable_inputs::OrderedDict)::Nothing
     allowed_oxygen_buffers = ["qfm", "qif", "nno", "hm", "cco"]
     allowed_activity_buffers = ["aH2O", "aO2", "aMgO", "aFeO", "aAl2O3", "aTiO2", "aSio2"]
     allowed_buffers = vcat(allowed_oxygen_buffers, allowed_activity_buffers)
@@ -268,7 +281,7 @@ end
 
 If offset is provided, checks that buffer is also provided.
 """
-function check_buffer_if_offset(constant_inputs::OrderedDict, variable_inputs::OrderedDict)
+function check_buffer_if_offset(constant_inputs::OrderedDict, variable_inputs::OrderedDict)::Nothing
     # Check if "buffer" is present in either constant_inputs or variable_inputs
     if haskey(constant_inputs, "offset") || haskey(variable_inputs, "offset")
         if !haskey(constant_inputs, "buffer") && !haskey(variable_inputs, "buffer")
@@ -291,7 +304,7 @@ Outputs:
     - updated_constant_inputs (Dict): inputs that will remain unchanged between MAGEMin simulations.
     - updated_variable_inputs (Dict): inputs that vary across MAGEMin simulations.
 """
-function prepare_inputs(constant_inputs::OrderedDict, variable_inputs::OrderedDict) :: AbstractDict
+function prepare_inputs(constant_inputs::OrderedDict, variable_inputs::OrderedDict)::Tuple{OrderedDict, OrderedDict}
     check_constant_inputs_values(constant_inputs)
     check_variable_inputs_vectors(variable_inputs)
 
@@ -307,9 +320,10 @@ function prepare_inputs(constant_inputs::OrderedDict, variable_inputs::OrderedDi
     validate_positive_pressure(constant_inputs, variable_inputs)
     validate_positive_oxides(constant_inputs, variable_inputs)
 
-    replace_zero_pressure!(constant_inputs, variable_inputs)
-    replace_zero_oxides!(constant_inputs, variable_inputs)
+    new_constant_inputs, new_variable_inputs = replace_zero_pressure(constant_inputs, variable_inputs)
+    new_constant_inputs, new_variable_inputs = replace_zero_oxides(new_constant_inputs, new_variable_inputs)
 
+    return new_constant_inputs, new_variable_inputs
 end
 
 export prepare_inputs

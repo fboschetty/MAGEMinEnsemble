@@ -322,93 +322,94 @@ end
 
 end
 
-@testset "replace_zero_pressure!" begin
+@testset "replace_zero_pressure" begin
     # Test case 1: Pressure in constant_inputs is 0.0, should be replaced with 0.001
     constant_inputs = OrderedDict("P" => 0.0)
     variable_inputs = OrderedDict()
-    InputValidation.replace_zero_pressure!(constant_inputs, variable_inputs)
-    @test constant_inputs["P"] == 0.001
+    new_constant_inputs, new_variable_inputs = InputValidation.replace_zero_pressure(constant_inputs, variable_inputs)
+    @test new_constant_inputs["P"] == 0.001
 
     # Test case 2: Pressure in constant_inputs is positive, should remain unchanged
     constant_inputs = OrderedDict("P" => 1000.0)
     variable_inputs = OrderedDict()
-    InputValidation.replace_zero_pressure!(constant_inputs, variable_inputs)
-    @test constant_inputs["P"] == 1000.0
+    new_constant_inputs, new_variable_inputs = InputValidation.replace_zero_pressure(constant_inputs, variable_inputs)
+    @test new_constant_inputs["P"] == 1000.0
 
     # Test case 3: Pressure in variable_inputs is a vector with some 0.0 values, should be replaced
     constant_inputs = OrderedDict()
     variable_inputs = OrderedDict("P" => [0.0, 1000.0, 0.0])
-    InputValidation.replace_zero_pressure!(constant_inputs, variable_inputs)
-    @test variable_inputs["P"] == [0.001, 1000.0, 0.001]
+    new_constant_inputs, new_variable_inputs = InputValidation.replace_zero_pressure(constant_inputs, variable_inputs)
+    @test new_variable_inputs["P"] == [0.001, 1000.0, 0.001]
 
     # Test case 4: Pressure in variable_inputs is a vector with no 0.0 values, should remain unchanged
     constant_inputs = OrderedDict()
     variable_inputs = OrderedDict("P" => [1000.0, 500.0])
-    InputValidation.replace_zero_pressure!(constant_inputs, variable_inputs)
-    @test variable_inputs["P"] == [1000.0, 500.0]
+    new_constant_inputs, new_variable_inputs = InputValidation.replace_zero_pressure(constant_inputs, variable_inputs)
+    @test new_variable_inputs["P"] == [1000.0, 500.0]
 
     # Test case 5: Pressure defined in both constant_inputs and variable_inputs, 0.0 values replaced
     constant_inputs = OrderedDict("P" => 0.0)
     variable_inputs = OrderedDict("P" => [0.0, 1000.0])
-    InputValidation.replace_zero_pressure!(constant_inputs, variable_inputs)
-    @test constant_inputs["P"] == 0.001
-    @test variable_inputs["P"] == [0.001, 1000.0]
+    new_constant_inputs, new_variable_inputs = InputValidation.replace_zero_pressure(constant_inputs, variable_inputs)
+    @test new_constant_inputs["P"] == 0.001
+    @test new_variable_inputs["P"] == [0.001, 1000.0]
 
     # Test case 6: Pressure in both constant_inputs and variable_inputs, no 0.0 values, should remain unchanged
     constant_inputs = OrderedDict("P" => 1000.0)
     variable_inputs = OrderedDict("P" => [1000.0, 500.0])
-    InputValidation.replace_zero_pressure!(constant_inputs, variable_inputs)
-    @test constant_inputs["P"] == 1000.0
-    @test variable_inputs["P"] == [1000.0, 500.0]
-
+    new_constant_inputs, new_variable_inputs = InputValidation.replace_zero_pressure(constant_inputs, variable_inputs)
+    @test new_constant_inputs["P"] == 1000.0
+    @test new_variable_inputs["P"] == [1000.0, 500.0]
 end
 
-@testset "replace_zero_oxides!" begin
+
+@testset "replace_zero_oxides" begin
     # Test case 1: Oxides in constant_inputs are 0.0, should be replaced with 0.001 (excluding H2O)
     constant_inputs = OrderedDict("SiO2" => 0.0, "TiO2" => 0.0, "H2O" => 0.0)
     variable_inputs = OrderedDict()
-    InputValidation.replace_zero_oxides!(constant_inputs, variable_inputs)
-    @test constant_inputs["SiO2"] == 0.001
-    @test constant_inputs["TiO2"] == 0.001
-    @test constant_inputs["H2O"] == 0.0  # H2O should not be replaced
+    new_constant_inputs, new_variable_inputs = InputValidation.replace_zero_oxides(constant_inputs, variable_inputs)
+    @test new_constant_inputs["SiO2"] == 0.001
+    @test new_constant_inputs["TiO2"] == 0.001
+    @test new_constant_inputs["H2O"] == 0.0  # H2O should not be replaced
 
     # Test case 2: Oxides in constant_inputs are positive, should remain unchanged
     constant_inputs = OrderedDict("SiO2" => 1000.0, "TiO2" => 500.0)
     variable_inputs = OrderedDict()
-    InputValidation.replace_zero_oxides!(constant_inputs, variable_inputs)
-    @test constant_inputs["SiO2"] == 1000.0
-    @test constant_inputs["TiO2"] == 500.0
+    new_constant_inputs, new_variable_inputs = InputValidation.replace_zero_oxides(constant_inputs, variable_inputs)
+    @test new_constant_inputs["SiO2"] == 1000.0
+    @test new_constant_inputs["TiO2"] == 500.0
 
     # Test case 3: Oxides in variable_inputs are 0.0, should be replaced with 0.001 (excluding H2O)
     constant_inputs = OrderedDict()
     variable_inputs = OrderedDict("SiO2" => [0.0, 10.0], "TiO2" => [0.0, 5.0], "H2O" => [0.0, 0.0])
-    InputValidation.replace_zero_oxides!(constant_inputs, variable_inputs)
-    @test variable_inputs["SiO2"] == [0.001, 10.0]
-    @test variable_inputs["TiO2"] == [0.001, 5.0]
-    @test variable_inputs["H2O"] == [0.0, 0.0]  # H2O should not be replaced
+    new_constant_inputs, new_variable_inputs = InputValidation.replace_zero_oxides(constant_inputs, variable_inputs)
+    @test new_variable_inputs["SiO2"] == [0.001, 10.0]
+    @test new_variable_inputs["TiO2"] == [0.001, 5.0]
+    @test new_variable_inputs["H2O"] == [0.0, 0.0]  # H2O should not be replaced
 
     # Test case 4: Oxides in variable_inputs are positive, should remain unchanged
     constant_inputs = OrderedDict()
     variable_inputs = OrderedDict("SiO2" => [1000.0, 500.0], "TiO2" => [300.0, 200.0])
-    InputValidation.replace_zero_oxides!(constant_inputs, variable_inputs)
-    @test variable_inputs["SiO2"] == [1000.0, 500.0]
-    @test variable_inputs["TiO2"] == [300.0, 200.0]
+    new_constant_inputs, new_variable_inputs = InputValidation.replace_zero_oxides(constant_inputs, variable_inputs)
+    @test new_variable_inputs["SiO2"] == [1000.0, 500.0]
+    @test new_variable_inputs["TiO2"] == [300.0, 200.0]
 
     # Test case 5: Pressure and oxides in both constant_inputs and variable_inputs, 0.0 values replaced
     constant_inputs = OrderedDict("SiO2" => 0.0, "TiO2" => 1000.0)
     variable_inputs = OrderedDict("TiO2" => [0.0, 500.0], "H2O" => [0.0, 0.0])
-    InputValidation.replace_zero_oxides!(constant_inputs, variable_inputs)
-    @test constant_inputs["SiO2"] == 0.001
-    @test constant_inputs["TiO2"] == 1000.0
-    @test variable_inputs["TiO2"] == [0.001, 500.0]
-    @test variable_inputs["H2O"] == [0.0, 0.0]  # H2O should not be replaced
+    new_constant_inputs, new_variable_inputs = InputValidation.replace_zero_oxides(constant_inputs, variable_inputs)
+    @test new_constant_inputs["SiO2"] == 0.001
+    @test new_constant_inputs["TiO2"] == 1000.0
+    @test new_variable_inputs["TiO2"] == [0.001, 500.0]
+    @test new_variable_inputs["H2O"] == [0.0, 0.0]  # H2O should not be replaced
 
     # Test case 6: Oxides with no 0.0 values in both constant_inputs and variable_inputs, should remain unchanged
     constant_inputs = OrderedDict("SiO2" => 1000.0, "TiO2" => 500.0)
     variable_inputs = OrderedDict("SiO2" => [1000.0, 500.0], "TiO2" => [300.0, 200.0])
-    InputValidation.replace_zero_oxides!(constant_inputs, variable_inputs)
-    @test constant_inputs["SiO2"] == 1000.0
-    @test constant_inputs["TiO2"] == 500.0
-    @test variable_inputs["SiO2"] == [1000.0, 500.0]
-    @test variable_inputs["TiO2"] == [300.0, 200.0]
+    new_constant_inputs, new_variable_inputs = InputValidation.replace_zero_oxides(constant_inputs, variable_inputs)
+    @test new_constant_inputs["SiO2"] == 1000.0
+    @test new_constant_inputs["TiO2"] == 500.0
+    @test new_variable_inputs["SiO2"] == [1000.0, 500.0]
+    @test new_variable_inputs["TiO2"] == [300.0, 200.0]
 end
+
