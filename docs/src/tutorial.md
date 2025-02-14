@@ -9,7 +9,7 @@ The goals of this tutorial are as follows:
 
 It utilises existing thermodynamic databases allowing it to perform calculations across a broad compositional and intensive variable space. See the [MAGEMin Github](https://github.com/ComputationalThermodynamics/MAGEMin) and [companion paper](https://doi.org/10.1029/2022GC010427) for further details.
 
-`MAGEMin_C` is a Julia wrapper for `MAGEMin` and provides a more user-friendly interface for performing simulations using `MAGEMin`, and is utilised by MAGEMinEnsemble for performing many fractional-crystallisation simulations.
+`MAGEMin_C` provides a more user-friendly Julia-based interface for performing simulations using `MAGEMin`, and is utilised by MAGEMinEnsemble for performing many fractional-crystallisation simulations.
 
 ## Single Calculations
 
