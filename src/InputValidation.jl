@@ -10,10 +10,7 @@ Check the contents of constant_inputs for typing, ensure that numeric values are
 """
 function check_constant_inputs_values(constant_inputs::OrderedDict)
     for (key, value) in constant_inputs
-        if key == "bulk"
-            check_bulk_in_constant_inputs(constant_inputs)
-
-        elseif key == "buffer"
+        if key == "buffer"
             # "buffer" must be a string
             if !isa(value, String)
                 throw(ArgumentError("'buffer' must be a string"))
@@ -28,36 +25,14 @@ end
 
 
 """
-    check_bulk_in_constant_inputs(constant_inputs)
-
-If "bulk" is a constant_input, check it is an ordered dict and that oxides are numeric.
-"""
-function check_bulk_in_constant_inputs(constant_inputs::OrderedDict)
-    if haskey(constant_inputs, "bulk")
-        if !(isa(constant_inputs["bulk"], OrderedDict))
-            throw(ArgumentError("The key 'bulk' should be an ordered dictionary"))
-        end
-
-        for (oxide, oxide_value) in constant_inputs["bulk"]
-            if !isa(oxide_value, Number)
-                throw(ArgumentError("Non-numeric value found for oxide: $oxide in 'bulk'"))
-            end
-        end
-    end
-end
-
-
-"""
-    check_variable_inputs_values(variable_inputs)
+    check_variable_inputs_vectors(variable_inputs)
 
 Check that variable inputs are Vectors.
 """
-function check_variable_inputs_values(variable_inputs::OrderedDict)
+function check_variable_inputs_vectors(variable_inputs::OrderedDict)
     for (key, value) in variable_inputs
-        if key == "bulk"
-            check_bulk_in_variable_inputs(variable_inputs)
 
-        elseif !isa(value, AbstractVector)
+        if !isa(value, AbstractVector)
             throw(ArgumentError("Non-vector value found for key: $key in variable_inputs"))
         end
     end
@@ -65,77 +40,12 @@ end
 
 
 """
-    check_bulk_in_variable_input(constant_inputs)
-
-If "bulk" is a variable input, check that it is an ordered dictionary and that it contains Vectors of Numeric values.
-"""
-function check_bulk_in_variable_inputs(variable_inputs::OrderedDict)
-    if haskey(variable_inputs, "bulk")
-        if !(isa(variable_inputs["bulk"], OrderedDict))
-            throw(ArgumentError("The key 'bulk' should be an ordered dictionary."))
-        end
-
-        for (oxide, oxide_value) in variable_inputs["bulk"]
-            if !(isa(oxide_value, AbstractVector) && all(x -> isa(x, Number), oxide_value))
-                throw(ArgumentError("Non-numeric value found in vector for oxide: $oxide in 'bulk'"))
-            end
-        end
-    end
-end
-
-
-"""
-    check_matching_bulk_oxides(constant_inputs, variable_inputs)
-
-Check if constant_inputs["bulk"] and variable_inputs["bulk"] have the same oxide strings as keys.
-"""
-function check_matching_bulk_oxides(constant_inputs::OrderedDict, variable_inputs::OrderedDict)
-    if "bulk" in keys(constant_inputs) && "bulk" in keys(variable_inputs)
-        matching_oxides = intersect(keys(constant_inputs["bulk"]), keys(variable_inputs["bulk"]))
-        if !isempty(matching_oxides)
-            matching_oxides_str = join(sort(collect(matching_oxides)), ", ")
-            error("$(matching_oxides_str) are defined in both variable_inputs['bulk'] and constant_inputs['bulk']")
-        end
-    end
-end
-
-
-"""
-    validate_inputs(constant_inputs, variable_inputs)
-
-Combine the above validation functions into a single function for ease of use.
-"""
-function validate_inputs(constant_inputs::OrderedDict, variable_inputs::OrderedDict)
-    check_constant_inputs_values(constant_inputs)
-    check_variable_inputs_values(variable_inputs)
-    check_bulk_in_constant_inputs(constant_inputs)
-    check_bulk_in_variable_inputs(variable_inputs)
-    check_matching_bulk_oxides(constant_inputs, variable_inputs)
-end
-
-
-"""
-    validate_keys(constant_inputs, variable_inputs)
-
-Check no keys are defined in both constant and variable inputs.
-"""
-function validate_keys(constant_inputs::OrderedDict, variable_inputs::OrderedDict)
-    # Check for matching keys between constant and variable inputs
-    common_keys = intersect(keys(variable_inputs), keys(constant_inputs))
-    if !isempty(common_keys) && !("bulk" in common_keys)
-        common_str = join(sort(collect(common_keys)), ", ")
-        error("Matching keys in constant_inputs and variable_inputs ($common_str). Inputs must be either constant or variable, not both.")
-    end
-end
-
-
-"""
-    validate_compositions_and_pressure(constant_inputs, variable_inputs)
+    check_required_inputs(constant_inputs, variable_inputs)
 
 Check that list of required inputs is defined in either constant_inputs or variable_inputs
 """
-function check_required_inputs_provided(constant_inputs::OrderedDict, variable_inputs::OrderedDict)
-    required_inputs = ["P", "bulk"]
+function check_required_inputs(constant_inputs::OrderedDict, variable_inputs::OrderedDict)
+    required_inputs = ["P"]
 
     # Check if each required input is present in either constant_inputs or variable_inputs
     for input in required_inputs
@@ -143,6 +53,37 @@ function check_required_inputs_provided(constant_inputs::OrderedDict, variable_i
             error("Required input '$input' is missing from both constant_inputs and variable_inputs.")
         end
     end
+end
+
+
+"""
+    check_matching_keys(constant_inputs, variable_inputs)
+
+Check no keys are defined in both constant and variable inputs.
+"""
+function check_matching_keys(constant_inputs::OrderedDict, variable_inputs::OrderedDict)
+    # Check for matching keys between constant and variable inputs
+    common_keys = intersect(keys(variable_inputs), keys(constant_inputs))
+    if !isempty(common_keys)
+        common_str = join(sort(collect(common_keys)), ", ")
+        error("Matching keys in constant_inputs and variable_inputs ($common_str). Inputs must be either constant or variable, not both.")
+    end
+end
+
+
+"""
+    oxides = check_keys_oxygen(d)
+
+Returns keys in an ordered dictionary (`od`) that contain a capital "O".
+"""
+function check_keys_oxygen(od::OrderedDict)
+    oxides = []
+    for key in keys(od)
+        if occursin("O", key)  # Checks if "O" appears in the key
+            push!(oxides, key)
+        end
+    end
+    return oxides
 end
 
 
@@ -156,22 +97,15 @@ function validate_oxides(constant_inputs::OrderedDict, variable_inputs::OrderedD
     accepted_oxides = ["SiO2", "TiO2", "Al2O3", "Cr2O3", "FeO", "MgO", "CaO", "Na2O", "K2O", "H2O", "O", "Fe2O3"]
 
     # Extract bulk compositions & get oxides
-    defined_oxides = []
-    if haskey(variable_inputs, "bulk")
-        variable_bulk = variable_inputs["bulk"]
-        append!(defined_oxides, keys(variable_bulk))
-    end
-
-    if haskey(constant_inputs, "bulk")
-        constant_bulk = constant_inputs["bulk"]
-        append!(defined_oxides, keys(constant_bulk))
-    end
+    variable_oxides = check_keys_oxygen(variable_inputs)
+    constant_oxides = check_keys_oxygen(constant_inputs)
+    defined_oxides = vcat(variable_oxides, constant_oxides)
 
     # Ensure all oxides in bulk composition are from the accepted list
     invalid_oxides = setdiff(defined_oxides, accepted_oxides)
     if !isempty(invalid_oxides)
         invalid_str = join(sort(collect(invalid_oxides)), ", ")
-        error("Invalid oxides found in bulk composition: $invalid_str. Allowed oxides are: $(join(accepted_oxides, ", ")).")
+        error("Invalid defined oxide: $invalid_str. Allowed oxides are: $(join(accepted_oxides, ", ")).")
     end
 
     # Ensure that "O" and "Fe2O3" are not both present
@@ -193,13 +127,18 @@ function validate_oxides(constant_inputs::OrderedDict, variable_inputs::OrderedD
 end
 
 
+"""
+    validate_positive_pressure(constant_inputs, variable_inputs)
+
+Ensures that defined pressure value(s) are positive. Throws an error if they are negative.
+"""
 function validate_positive_pressure(constant_inputs::OrderedDict, variable_inputs::OrderedDict)
-    # Check for pressure in constant_inputs and add it if present
+    # Check for pressure in constant_inputs
     if haskey(constant_inputs, "P")
         P = [constant_inputs["P"]]
     end
 
-    # Check for pressure in variable_inputs and add it if present
+    # Check for pressure in variable_inputs
     if haskey(variable_inputs, "P")
         P = variable_inputs["P"]
     end
@@ -211,33 +150,74 @@ function validate_positive_pressure(constant_inputs::OrderedDict, variable_input
 end
 
 
-function validate_positive_bulk_composition(bulk::Dict{String, Float64})
-    # Exclude "H2O" and ensure all values are positive
-    for (oxide, value) in bulk
-        if value < 0.0
-            error("Bulk composition for $oxide cannot be negative.")
+"""
+    validate_positive_oxides(constant_inputs, variable_inputs)
+
+Ensures that defined oxide values are positive. Throws an error if they are negative.
+"""
+function validate_positive_oxides(constant_inputs::OrderedDict, variable_inputs::OrderedDict)
+
+    constant_oxides = check_keys_oxygen(constant_inputs)
+    variable_oxides = check_keys_oxygen(variable_inputs)
+
+    # Check for negative values in constant_inputs
+    for oxide in constant_oxides
+        if constant_inputs[oxide] < 0.0
+            error("Oxide values must be positive. Found negative value in constant_inputs for $oxide")
+        end
+    end
+
+    # Check for negative values in variable_inputs (vectors of oxides)
+    for oxide in variable_oxides
+        if any(v -> v < 0.0, variable_inputs[oxide])
+            error("Oxide values must be positive. Found negative values in variable_inputs for $oxide: $(variable_inputs[oxide][variable_inputs[oxide] .< 0.0])")
         end
     end
 end
 
 
-function replace_zero_pressure!(P::Vector{Float64})
-    for i in 1:length(P)
-        if P[i] == 0.0
-            P[i] = 0.001
+"""
+    replace_zero_pressure!(constant_inputs, variable_inputs)
+
+Replaces pressures defined as 0.0 with 0.001
+"""
+function replace_zero_pressure!(constant_inputs::OrderedDict, variable_inputs::OrderedDict)
+    # Check for pressure in constant_inputs
+    if haskey(constant_inputs, "P")
+        if constant_inputs["P"] == 0.0
+            constant_inputs["P"] = 0.001
         end
     end
-    return P
+
+    # Check for pressure in variable_inputs
+    if haskey(variable_inputs, "P")
+        variable_inputs["P"] .= replace(variable_inputs["P"], 0.0 => 0.001)
+    end
 end
 
 
-function replace_zero_bulk_composition!(bulk::Dict{String, Float64})
-    for (oxide, value) in bulk
-        if oxide != "H2O" && value == 0.0
-            bulk[oxide] = 0.001
+"""
+    replace_zero_oxides!(constant_inputs, variable_inputs)
+
+Replaces oxides, except H2O, defined as 0.0 with 0.001.
+"""
+function replace_zero_oxides!(constant_inputs::OrderedDict, variable_inputs::OrderedDict)
+    constant_oxides = check_keys_oxygen(constant_inputs)
+    variable_oxides = check_keys_oxygen(variable_inputs)
+
+    # Replace 0.0 with 0.001 for oxides in constant_inputs
+    for oxide in constant_oxides
+        if haskey(constant_inputs, oxide) && constant_inputs[oxide] == 0.0 && oxide != "H2O"
+            constant_inputs[oxide] = 0.001
         end
     end
-    return bulk
+
+    # Replace 0.0 with 0.001 for oxides in variable_inputs
+    for oxide in variable_oxides
+        if haskey(variable_inputs, oxide) && oxide != "H2O"
+            variable_inputs[oxide] .= replace(variable_inputs[oxide], 0.0 => 0.001)
+        end
+    end
 end
 
 
@@ -256,7 +236,7 @@ function validate_buffer(constant_inputs::OrderedDict, variable_inputs::OrderedD
         return nothing
     end
 
-   # Check if "buffer" is in constant_inputs and validate
+    # Check if "buffer" is in constant_inputs and validate
     if haskey(constant_inputs, "buffer")
         buffer = constant_inputs["buffer"]
         if !(buffer in allowed_buffers)
@@ -308,29 +288,28 @@ Inputs:
     - variable_inputs (Dict): inputs that vary across MAGEMin simulations.
 
 Outputs:
-    - all_inputs (Dict): Single dictionary containing both variable and constant inputs that have the correct types to be used in MAGEMin.
+    - updated_constant_inputs (Dict): inputs that will remain unchanged between MAGEMin simulations.
+    - updated_variable_inputs (Dict): inputs that vary across MAGEMin simulations.
 """
 function prepare_inputs(constant_inputs::OrderedDict, variable_inputs::OrderedDict) :: AbstractDict
-    # Check required inputs are defined in constant_inputs or variable_inputs
-    check_required_inputs_provided(constant_inputs, variable_inputs)  # TESTS
+    check_constant_inputs_values(constant_inputs)
+    check_variable_inputs_vectors(variable_inputs)
 
-    # Validate input types
-    validate_inputs(constant_inputs, variable_inputs)
+    check_required_inputs(constant_inputs, variable_inputs)
 
-    # Validate keys in constant and variable inputs
-    validate_keys(constant_inputs, variable_inputs)
+    check_matching_keys(constant_inputs, variable_inputs)
 
-    # Validate oxide compatibility with MAGEMin
     validate_oxides(constant_inputs, variable_inputs)
 
-    # Validate the buffer
     validate_buffer(constant_inputs, variable_inputs)
     check_buffer_if_offset(constant_inputs, variable_inputs)
 
-    # Validate bulk composition and pressure constraints
-    validate_bulk_and_pressure(all_inputs)
+    validate_positive_pressure(constant_inputs, variable_inputs)
+    validate_positive_oxides(constant_inputs, variable_inputs)
 
-    return all_inputs
+    replace_zero_pressure!(constant_inputs, variable_inputs)
+    replace_zero_oxides!(constant_inputs, variable_inputs)
+
 end
 
 export prepare_inputs

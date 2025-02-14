@@ -1,238 +1,238 @@
 using Test
 using OrderedCollections
+
 include("../src/InputValidation.jl")
 using .InputValidation
 
 
 # Test that constant_inputs are numeric
-@testset "Check constant_inputs values are numeric except 'bulk' and 'buffer'" begin
-    # Valid input
-    constant_inputs_valid = OrderedDict("bulk" => OrderedDict("SiO2" => 53.0, "FeO" => 10.0), "buffer" => "qfm", "P" => 1.0)
-
-    # Test valid case
+@testset "Check constant_inputs values are numeric" begin
+    # Test Case 1: all constant inputs are Float64
+    constant_inputs_valid = OrderedDict("SiO2" => 53.0, "FeO" => 10.0, "P" => 1.0)
     @test InputValidation.check_constant_inputs_values(constant_inputs_valid) === nothing
 
-    # Invalid case: non-numeric value in constant_inputs
-    constant_inputs_invalid = OrderedDict("bulk" => OrderedDict("SiO2" => 53.0, "FeO" => "invalid_value"), "P" => 1.0)
+    # Test Case 2: buffer is a string
+    constant_inputs_valid = OrderedDict("buffer" => "qfm")
+    @test InputValidation.check_constant_inputs_values(constant_inputs_valid) === nothing
 
-    # Expect an ArgumentError because of the non-numeric "FeO" value in the "bulk" dictionary
+    # Test Case 3: non-numeric value in constant_inputs
+    constant_inputs_invalid = OrderedDict("SiO2" => 53.0, "FeO" => "invalid_value", "P" => 1.0)
     @test_throws ArgumentError InputValidation.check_constant_inputs_values(constant_inputs_invalid)
 
-    # Invalid case: "buffer" is not a string
-    constant_inputs_invalid_buffer = OrderedDict("bulk" => OrderedDict("SiO2" => 53.0, "FeO" => 10.0), "buffer" => 123)
-
-    # Expect an ArgumentError because "buffer" is not a string
+    # Test Case 4: "buffer" is not a string
+    constant_inputs_invalid_buffer = OrderedDict("SiO2" => 53.0, "FeO" => 10.0, "buffer" => 123)
     @test_throws ArgumentError InputValidation.check_constant_inputs_values(constant_inputs_invalid_buffer)
-
-    # Invalid case: a non-numeric value for a non-"bulk", non-"buffer" key
-    constant_inputs_invalid_numeric = OrderedDict("bulk" => OrderedDict("SiO2" => 53.0, "FeO" => 10.0), "P" => "not_a_number")
-
-    # Expect an ArgumentError because "P" is not numeric
-    @test_throws ArgumentError InputValidation.check_constant_inputs_values(constant_inputs_invalid_numeric)
-
 end
 
-@testset "Check 'bulk' in constant_inputs" begin
-    constant_inputs_valid = OrderedDict("bulk" => OrderedDict("SiO2" => 53.0, "FeO" => 10.0))
+@testset "Check variable_inputs values are vectors" begin
+    # Test Case 1: all variable_inputs are vectors
+    variable_inputs_valid = OrderedDict("SiO2" => [53.0, 54.0], "FeO" => [10.0, 11.0], "temperature" => [300.0, 400.0])
+    @test InputValidation.check_variable_inputs_vectors(variable_inputs_valid) === nothing
 
-    # Test valid case
-    @test InputValidation.check_bulk_in_constant_inputs(constant_inputs_valid) === nothing
-
-    # Test invalid 'bulk' (non-numeric value)
-    constant_inputs_invalid = OrderedDict("bulk" => OrderedDict("SiO2" => "invalid", "FeO" => 10.0))
-    @test_throws ArgumentError InputValidation.check_bulk_in_constant_inputs(constant_inputs_invalid)
-
-    # Test invalid 'bulk' (not a dictionary)
-    constant_inputs_invalid2 = OrderedDict("bulk" => [53.0, 10.0])
-    @test_throws ArgumentError InputValidation.check_bulk_in_constant_inputs(constant_inputs_invalid2)
+    # Test Case 2: non-vector value
+    variable_inputs_invalid = OrderedDict("P" => "300,400")
+    @test_throws ArgumentError InputValidation.check_variable_inputs_vectors(variable_inputs_invalid)
 end
 
-@testset "Check variable_inputs values are vectors except 'bulk'" begin
-    variable_inputs_valid = OrderedDict("bulk" => OrderedDict("SiO2" => [53.0, 54.0], "FeO" => [10.0, 11.0]), "temperature" => [300.0, 400.0])
+@testset "check_keys_oxygen" begin
+    # Test case 1: Dictionary with keys containing "O"
+    od = OrderedDict("SiO2" => 10.0, "TiO2" => 5.0, "Al2O3" => 7.0)
+    @test InputValidation.check_keys_oxygen(od) == ["SiO2", "TiO2", "Al2O3"]  # All the keys contain "O"
 
-    # Test valid case
-    @test InputValidation.check_variable_inputs_values(variable_inputs_valid) === nothing
+    # Test case 2: Dictionary with no keys containing "O"
+    od = OrderedDict("P" => 5.0)
+    @test InputValidation.check_keys_oxygen(od) == []  # No keys contain "O"
 
-    # Test invalid case (non-vector value)
-    variable_inputs_invalid = OrderedDict("temperature" => "300,400")
-    @test_throws ArgumentError InputValidation.check_variable_inputs_values(variable_inputs_invalid)
+    # Test case 3: Dictionary with some keys containing "O"
+    od = OrderedDict("P" => 5.0, "SiO2" => 3.0, "FeO" => 2.0)
+    @test InputValidation.check_keys_oxygen(od) == ["SiO2", "FeO"]  # Only SiO2 and FeO contain "O"
 
+    # Test case 5: Empty dictionary (no keys)
+    od = OrderedDict()
+    @test InputValidation.check_keys_oxygen(od) == []  # No oxides as dictionary is empty
+
+    # Test case 6: Dictionary with "O" in some keys, including "O" alone
+    od = OrderedDict("O" => 2.0, "SiO2" => 10.0, "CaO" => 8.0)
+    @test InputValidation.check_keys_oxygen(od) == ["O", "SiO2", "CaO"]  # "O" should be included
 end
 
-@testset "Check 'bulk' in variable_inputs" begin
-    variable_inputs_valid = OrderedDict("bulk" => OrderedDict("SiO2" => [53.0, 54.0], "FeO" => [10.0, 11.0]), "temperature" => [300.0, 400.0])
 
-    # Test valid case
-    @test InputValidation.check_bulk_in_variable_inputs(variable_inputs_valid) === nothing
+@testset "validate_oxides" begin
+    # Test case 1: Valid oxides in constant_inputs.
+    constant_inputs = OrderedDict("SiO2" => 38.4, "TiO2" => 0.7, "Al2O3" => 7.7,
+                                  "Cr2O3" => 0.0, "FeO" => 5.98, "MgO" => 9.95,
+                                  "CaO" => 8.25, "Na2O" => 2.26, "K2O" => 0.24,
+                                  "O" => 4.0, "H2O" => 12.7,)
+    variable_inputs = OrderedDict()
+    @test InputValidation.validate_oxides(constant_inputs, variable_inputs) === nothing
 
-    # Test invalid case (non-numeric vector in 'bulk')
-    variable_inputs_invalid = OrderedDict("bulk" => OrderedDict("SiO2" => ["invalid", 54.0], "FeO" => [10.0, 11.0]))
-    @test_throws ArgumentError InputValidation.check_bulk_in_variable_inputs(variable_inputs_invalid)
+    # Test case 1: Valid oxides in variable_inputs.
+    constant_inputs = OrderedDict()
+    variable_inputs = OrderedDict("SiO2" => [38.4, 38.5], "TiO2" => [0.7, 0.8], "Al2O3" => [7.7, 7.8],
+                                  "Cr2O3" => [0.0, 0.1], "FeO" => [5.98, 5.99], "MgO" => [9.95, 9.96],
+                                  "CaO" => [8.25, 8.26], "Na2O" => [2.26, 2.27], "K2O" => [0.24, 0.25],
+                                  "O" => [4.0, 4.1], "H2O" => [12.7, 12.8])
+    @test InputValidation.validate_oxides(constant_inputs, variable_inputs) === nothing
 
-    # Test invalid case (non-vector in 'bulk')
-    variable_inputs_invalid2 = OrderedDict("bulk" => OrderedDict("SiO2" => 53.0))
-    @test_throws ArgumentError InputValidation.check_bulk_in_variable_inputs(variable_inputs_invalid2)
+    # Test case 1: Valid oxides in across inputs.
+    constant_inputs = OrderedDict("SiO2" => 38.4, "TiO2" => 0.7, "Al2O3" => 7.7,
+                                  "Cr2O3" => 0.0, "FeO" => 5.98, "MgO" => 9.95)
+    variable_inputs = OrderedDict("CaO" => [8.25, 8.26], "Na2O" => [2.26, 2.27], "K2O" => [0.24, 0.25],
+                                  "O" => [4.0, 4.1], "H2O" => [12.7, 12.8])
+    @test InputValidation.validate_oxides(constant_inputs, variable_inputs) === nothing
 
-end
+    # Test case 2: Invalid oxide in constant_inputs
+    constant_inputs = OrderedDict("SiO2" => 38.4, "TiO2" => 0.7, "Al2O3" => 7.7,
+                                  "Cr2O3" => 0.0, "FeO" => 5.98, "MgO" => 9.95,
+                                  "CaO" => 8.25, "Na2O" => 2.26, "K2O" => 0.24,
+                                  "O" => 4.0, "H2O" => 12.7, "CuO" => 13.0)  # "CuO" is invalid
+    variable_inputs = OrderedDict()
+    @test_throws ErrorException InputValidation.validate_oxides(constant_inputs, variable_inputs)
 
-@testset "Check validate_inputs function" begin
-    constant_inputs = OrderedDict("bulk" => OrderedDict("SiO2" => 53.0, "FeO" => 10.0), "buffer" => "qfm", "P" => 1.0)
-    variable_inputs = OrderedDict("bulk" => OrderedDict("Al2O3" => [11.0, 12.0], "TiO2" => [1.0, 2.0]), "temperature" => [300.0, 400.0])
+    # Test case 3: Invalid oxide in variable_inputs
+    constant_inputs = OrderedDict()
+    variable_inputs = OrderedDict("SiO2" => [38.4, 38.5], "TiO2" => [0.7, 0.8], "Al2O3" => [7.7, 7.8],
+                                  "Cr2O3" => [0.0, 0.1], "FeO" => [5.98, 5.99], "MgO" => [9.95, 9.96],
+                                  "CaO" => [8.25, 8.26], "Na2O" => [2.26, 2.27], "K2O" => [0.24, 0.25],
+                                  "O" => [4.0, 4.1], "H2O" => [12.7, 12.8], "CuO" => [0.5, 0.6])  # "CuO" is invalid
+    @test_throws ErrorException InputValidation.validate_oxides(constant_inputs, variable_inputs)
 
-    # Test valid case
-    @test InputValidation.validate_inputs(constant_inputs, variable_inputs) === nothing
+    # Test case 3: Invalid oxide in both
+    constant_inputs = OrderedDict("SiO2" => 38.4, "TiO2" => 0.7, "Al2O3" => 7.7,
+                                  "Cr2O3" => 0.0, "FeO" => 5.98, "MgO" => 9.95, "CuO" => 0.5)  # CuO is invalid
+    variable_inputs = OrderedDict("CaO" => [8.25, 8.26], "Na2O" => [2.26, 2.27], "K2O" => [0.24, 0.25],
+                                  "O" => [4.0, 4.1], "H2O" => [12.7, 12.8], "P2O5" => [0.2, 0.3])  # P2O5 is invalid
+    @test_throws ErrorException InputValidation.validate_oxides(constant_inputs, variable_inputs)
 
-    # Test invalid case (non-numeric value in constant_inputs)
-    constant_inputs_invalid = OrderedDict("bulk" => OrderedDict("SiO2" => 53.0, "FeO" => "invalid"), "buffer" => "qfm")
-    @test_throws ArgumentError InputValidation.validate_inputs(constant_inputs_invalid, variable_inputs)
+    # Test case 4: Both "O" and "Fe2O3" in constant_inputs
+    constant_inputs = OrderedDict("SiO2" => 38.4, "TiO2" => 0.7, "Al2O3" => 7.7,
+                                  "Cr2O3" => 0.0, "FeO" => 5.98, "MgO" => 9.95,
+                                  "CaO" => 8.25, "Na2O" => 2.26, "K2O" => 0.24,
+                                  "O" => 4.0, "H2O" => 12.7, "Fe2O3" => 2.4)
+    variable_inputs = OrderedDict()
+    @test_throws ErrorException InputValidation.validate_oxides(constant_inputs, variable_inputs)
 
-end
+    # Test case 5: Both "O" and "Fe2O3" in variable_inputs
+    constant_inputs = OrderedDict()
+    variable_inputs = OrderedDict("SiO2" => [38.4, 38.5], "TiO2" => [0.7, 0.8], "Al2O3" => [7.7, 7.8],
+                                  "Cr2O3" => [0.0, 0.1], "FeO" => [5.98, 5.99], "MgO" => [9.95, 9.96],
+                                  "CaO" => [8.25, 8.26], "Na2O" => [2.26, 2.27], "K2O" => [0.24, 0.25],
+                                  "O" => [4.0, 4.1], "H2O" => [12.7, 12.8], "Fe2O3" => [5.1, 5.2])
+    @test_throws ErrorException InputValidation.validate_oxides(constant_inputs, variable_inputs)
 
-@testset "Check_matching_bulk_oxides" begin
-    # Test case 1: Matching oxides (should raise an error)
-    constant_inputs_1 = OrderedDict("bulk" => OrderedDict("SiO2" => 53.0))
-    variable_inputs_1 = OrderedDict("bulk" => OrderedDict("SiO2" => [52.0, 54.0]))
-    @test_throws ErrorException InputValidation.check_matching_bulk_oxides(constant_inputs_1, variable_inputs_1)
+    # Test case 6: Both "O" and "Fe2O3" present
+    constant_inputs = OrderedDict("SiO2" => 38.4, "TiO2" => 0.7, "Al2O3" => 7.7,
+                                  "Cr2O3" => 0.0, "FeO" => 5.98, "MgO" => 9.95, "Fe2O3" => 5.2)
+    variable_inputs = OrderedDict("CaO" => [8.25, 8.26], "Na2O" => [2.26, 2.27], "K2O" => [0.24, 0.25],
+                                  "O" => [4.0, 4.1], "H2O" => [12.7, 12.8])
+    @test_throws ErrorException InputValidation.validate_oxides(constant_inputs, variable_inputs)
 
-    # Test case 2: No matching oxides (should pass without errors)
-    constant_inputs_2 = OrderedDict("bulk" => OrderedDict("SiO2" => 53.0))
-    variable_inputs_2 = OrderedDict("bulk" => OrderedDict("FeO" => [9.0, 10.0]))
-    @test InputValidation.check_matching_bulk_oxides(constant_inputs_2, variable_inputs_2)  === nothing
+    # Test case 7: Neither "Fe2O3" nor "O" defined (should raise an error)
+    constant_inputs = OrderedDict("SiO2" => 38.4, "TiO2" => 0.7, "Al2O3" => 7.7,
+                                  "Cr2O3" => 0.0, "FeO" => 5.98, "MgO" => 9.95)
+    variable_inputs = OrderedDict("CaO" => [8.25, 8.26], "Na2O" => [2.26, 2.27], "K2O" => [0.24, 0.25],
+                                  "H2O" => [12.7, 12.8])
+    @test_throws ErrorException InputValidation.validate_oxides(constant_inputs, variable_inputs)
 
-    # Test case 3: No 'bulk' key in constant_inputs (should pass without errors)
-    constant_inputs_3 = OrderedDict("P" => [1.0, 2.0])  # No "bulk" key here
-    variable_inputs_3 = OrderedDict("bulk" => OrderedDict("SiO2" => [52.0, 54.0]))
-    @test InputValidation.check_matching_bulk_oxides(constant_inputs_3, variable_inputs_3) === nothing
+    # Test case 8: Missing oxides constant
+    constant_inputs = OrderedDict("SiO2" => 38.4, "TiO2" => 0.7, "Al2O3" => 7.7,
+                                  "Cr2O3" => 0.0)
+    variable_inputs = OrderedDict()
+    @test_throws ErrorException InputValidation.validate_oxides(constant_inputs, variable_inputs)
 
-    # Test case 4: No 'bulk' key in variable_inputs (should pass without errors)
-    constant_inputs_4 = OrderedDict("bulk" => OrderedDict("SiO2" => 53.0))
-    variable_inputs_4 = OrderedDict("P" => [1.0, 2.0])  # No "bulk" key here
-    @test InputValidation.check_matching_bulk_oxides(constant_inputs_4, variable_inputs_4) === nothing
+    # Test case 8: Missing oxides variable
+    constant_inputs = OrderedDict()
+    variable_inputs = OrderedDict("SiO2" => [38.4, 38.5], "TiO2" => [0.7, 0.8], "Al2O3" => [7.7, 7.8],
+                                  "Cr2O3" => [0.0, 0.1])
+    @test_throws ErrorException InputValidation.validate_oxides(constant_inputs, variable_inputs)
+
+    # Test case 8: Missing oxides across both
+    constant_inputs = OrderedDict("SiO2" => 38.4, "TiO2" => 0.7, "Al2O3" => 7.7,
+                                  "Cr2O3" => 0.0)
+    variable_inputs = OrderedDict("CaO" => [8.25, 8.26], "Na2O" => [2.26, 2.27], "K2O" => [0.24, 0.25],
+                                  "O" => [4.0, 4.1], "H2O" => [12.7, 12.8])
+    @test_throws ErrorException InputValidation.validate_oxides(constant_inputs, variable_inputs)
+
 end
 
 # Test for validation of keys in constant and variable inputs
 @testset "Key validation" begin
-    # Test no common keys
-    constant_inputs = OrderedDict("bulk" => Dict("SiO2" => 53.0), "P" => 1.0)
+    # Test Case 1: no common keys
+    constant_inputs = OrderedDict("SiO2" => 53.0, "P" => 1.0)
     variable_inputs = OrderedDict("buffer" => "qfm")
+    @test InputValidation.check_matching_keys(constant_inputs, variable_inputs) === nothing
 
-    @test InputValidation.validate_keys(constant_inputs, variable_inputs) === nothing
-
-    # Test common keys (should trigger an error)
-    constant_inputs_with_common_keys = OrderedDict("bulk" => Dict("SiO2" => 53.0), "P" => 1.0, "buffer" => "qfm")
+    # Test Case 2: common keys (should trigger an error)
+    constant_inputs_with_common_keys = OrderedDict("SiO2" => 53.0, "P" => 1.0, "buffer" => "qfm")
     variable_inputs_with_common_keys = OrderedDict("buffer" => "qfm")
-
-    @test_throws ErrorException InputValidation.validate_keys(constant_inputs_with_common_keys, variable_inputs_with_common_keys)
+    @test_throws ErrorException InputValidation.check_matching_keys(constant_inputs_with_common_keys, variable_inputs_with_common_keys)
 end
 
-# # Test for bulk composition and pressure validation
-# @testset "Composition and pressure validation" begin
-#     all_inputs = OrderedDict("bulk" => Dict("SiO2" => 53.0), "P" => 1.0)
+@testset "validate_positive_pressure" begin
 
-#     # Test that bulk composition and pressure are defined
-#     @test InputValidation.validate_compositions_and_pressure(all_inputs) === nothing
+    # Test case 1: Pressure defined in constant_inputs only, positive value
+    constant_inputs = OrderedDict("P" => 1000.0)
+    variable_inputs = OrderedDict()
+    @test InputValidation.validate_positive_pressure(constant_inputs, variable_inputs) === nothing
 
-#     # Test missing bulk composition (should trigger an error)
-#     all_inputs_no_bulk = OrderedDict("P" => 1.0)
-#     @test_throws ErrorException InputValidation.validate_compositions_and_pressure(all_inputs_no_bulk)
+    # Test case 2: Pressure defined in variable_inputs only, positive values
+    constant_inputs = OrderedDict()
+    variable_inputs = OrderedDict("P" => [1000.0, 500.0])
+    @test InputValidation.validate_positive_pressure(constant_inputs, variable_inputs) === nothing
 
-#     # Test missing pressure (should trigger an error)
-#     all_inputs_no_pressure = OrderedDict("bulk" => Dict("SiO2" => 53.0))
-#     @test_throws ErrorException InputValidation.validate_compositions_and_pressure(all_inputs_no_pressure)
-# end
+    # Test case 3: Pressure in constant_inputs with negative value
+    constant_inputs = OrderedDict("P" => -10.0)
+    variable_inputs = OrderedDict()
+    @test_throws ErrorException InputValidation.validate_positive_pressure(constant_inputs, variable_inputs)
 
-# Test set
-@testset "Validate Oxides Tests" begin
+    # Test case 4: Pressure in variable_inputs with negative value
+    constant_inputs = OrderedDict()
+    variable_inputs = OrderedDict("P" => [5.0, -7.0])
+    @test_throws ErrorException InputValidation.validate_positive_pressure(constant_inputs, variable_inputs)
 
-    # Test Case 1: Valid constant bulk comp
-    constant_inputs = OrderedDict("bulk" => OrderedDict(
-        "SiO2" => 38.4, "TiO2" => 0.7, "Al2O3" => 7.7,
-        "Cr2O3" => 0.0, "FeO" => 5.98, "MgO" => 9.95,
-        "CaO" => 8.25, "Na2O" => 2.26, "K2O" => 0.24,
-        "O" => 4.0, "H2O" => 12.7
-        )
-    )
-    variable_inputs = OrderedDict()  # No variable bulk
-    @test InputValidation.validate_oxides(constant_inputs, variable_inputs) === nothing
-
-    # Test Case 2: Valid variable bulk comp
-    constant_inputs = OrderedDict()  # No constant bulk
-    variable_inputs = OrderedDict("bulk" => OrderedDict(
-        "SiO2" => 38.4, "TiO2" => 0.7, "Al2O3" => 7.7,
-        "Cr2O3" => 0.0, "FeO" => 5.98, "MgO" => 9.95,
-        "CaO" => 8.25, "Na2O" => 2.26, "K2O" => 0.24,
-        "O" => 4.0, "H2O" => 12.7
-        )
-    )
-    @test InputValidation.validate_oxides(constant_inputs, variable_inputs) === nothing
-
-    # Test Case 3: Valid oxides between variable and constant bulks
-    constant_inputs = OrderedDict("bulk" => OrderedDict(
-        "SiO2" => 38.4, "TiO2" => 0.7, "Al2O3" => 7.7,
-        "Cr2O3" => 0.0, "FeO" => 5.98,
-        )
-    )
-    variable_inputs = OrderedDict("bulk" => OrderedDict(
-        "MgO" => 9.95, "CaO" => 8.25, "Na2O" => 2.26,
-        "K2O" => 0.24, "O" => 4.0, "H2O" => 12.7
-        )
-    )
-    @test InputValidation.validate_oxides(constant_inputs, variable_inputs) === nothing
-
-    # Test Case 4: Invalid oxide in bulk composition
-    constant_inputs = constant_inputs = OrderedDict("bulk" => OrderedDict(
-        "Al2O3" => 7.7, "Cr2O3" => 0.0, "FeO" => 5.98, "MgO" => 9.95,
-        "CaO" => 8.25, "Na2O" => 2.26, "K2O" => 0.24, "CuO" => 4.0, "H2O" => 12.7
-        )
-    )
-    variable_inputs = OrderedDict("bulk" => Dict("SiO2" => [38.4, 38.5], "TiO2" => [0.7, 0.8]))
-    @test_throws ErrorException InputValidation.validate_oxides(constant_inputs, variable_inputs)
-
-    # Test Case 3: Both "O" and "Fe2O3" present together
-    constant_inputs = OrderedDict("bulk" => Dict("SiO2" => 50.0, "O" => 10.0))
-    variable_inputs = OrderedDict("bulk" => Dict("Fe2O3" => 20.0, "Na2O" => 5.0))
-    @test_throws ErrorException InputValidation.validate_oxides(constant_inputs, variable_inputs)
-
-    # Test Case 4: Missing oxide in bulk composition
-    constant_inputs = OrderedDict("bulk" => Dict("SiO2" => 50.0, "TiO2" => 10.0, "FeO" => 30.0))
-    variable_inputs = OrderedDict("bulk" => Dict("CaO" => 20.0))
-    @test_throws ErrorException InputValidation.validate_oxides(constant_inputs, variable_inputs)
 end
 
-# Test for bulk composition and pressure constraints
-@testset "Bulk and pressure constraints validation" begin
-    all_inputs_valid = OrderedDict("bulk" => Dict("SiO2" => 53.0), "P" => 1.0)
+@testset "validate_positive_oxides" begin
 
-    # Test valid bulk and pressure constraints
-    @test InputValidation.validate_bulk_and_pressure(all_inputs_valid) === nothing
+    # Test case 1: Oxides defined in constant_inputs only, all positive values
+    constant_inputs = OrderedDict("SiO2" => 10.0, "TiO2" => 5.0)
+    variable_inputs = OrderedDict()
+    @test InputValidation.validate_positive_oxides(constant_inputs, variable_inputs) === nothing
 
-    # Test pressure 0 kbar conversion to 0.001 kbar
-    all_inputs_P_0 = OrderedDict("bulk" => Dict("SiO2" => 53.0), "P" => 0.0)
-    try
-        InputValidation.validate_bulk_and_pressure(all_inputs_P_0)
-        @test all_inputs_P_0["P"] == 0.001
-        true
-    catch e
-        false
-    end
+    # Test case 2: Oxides defined in variable_inputs only, all positive values
+    constant_inputs = OrderedDict()
+    variable_inputs = OrderedDict("SiO2" => [10.0, 7.0], "TiO2" => [5.0, 6.0])
+    @test InputValidation.validate_positive_oxides(constant_inputs, variable_inputs) === nothing
 
-    # Test oxide 0 wt% conversion to 0.001 wt%
-    all_inputs_Bulk_0 = OrderedDict("bulk" => Dict("SiO2" => 0.), "P" => 1.0)
-    try
-        InputValidation.validate_bulk_and_pressure(all_inputs_Bulk_0)
-        @test all_inputs_Bulk_0["bulk"]["SiO2"] == 0.001
-        true
-    catch e
-        false
-    end
+    # Test case 3: Oxides in constant_inputs with negative value
+    constant_inputs = OrderedDict("SiO2" => -10.0, "TiO2" => 5.0)
+    variable_inputs = OrderedDict()
+    @test_throws ErrorException InputValidation.validate_positive_oxides(constant_inputs, variable_inputs)
 
-    # Test invalid bulk composition
-    all_inputs_invalid_bulk = OrderedDict("bulk" => Dict("SiO2" => -0.1), "P" => 1.0)
-    @test_throws ErrorException InputValidation.validate_bulk_and_pressure(all_inputs_invalid_bulk)
+    # Test case 4: Oxides in variable_inputs with negative value
+    constant_inputs = OrderedDict()
+    variable_inputs = OrderedDict("SiO2" => [10.0, -5.0], "TiO2" => [5.0, 6.0])
+    @test_throws ErrorException InputValidation.validate_positive_oxides(constant_inputs, variable_inputs)
 
-    # Test invalid pressure value (should trigger an error)
-    all_inputs_invalid_pressure = OrderedDict("bulk" => Dict("SiO2" => 53.0), "P" => [-1.0])
-    @test_throws ErrorException InputValidation.validate_bulk_and_pressure(all_inputs_invalid_pressure)
+    # Test case 5: Oxides defined in both constant_inputs and variable_inputs, positive values
+    constant_inputs = OrderedDict("SiO2" => 10.0, "TiO2" => 5.0)
+    variable_inputs = OrderedDict("SiO2" => [7.0, 4.0], "TiO2" => [8.0, 9.0])
+    @test InputValidation.validate_positive_oxides(constant_inputs, variable_inputs) === nothing
+
+    # Test case 6: Oxides defined in both constant_inputs and variable_inputs, negative value in variable_inputs
+    constant_inputs = OrderedDict("SiO2" => 10.0, "TiO2" => 5.0)
+    variable_inputs = OrderedDict("SiO2" => [7.0, -4.0], "TiO2" => [8.0])
+    @test_throws ErrorException InputValidation.validate_positive_oxides(constant_inputs, variable_inputs)
+
+    # Test case 7: Oxides defined in both constant_inputs and variable_inputs, negative value in variable_inputs
+    constant_inputs = OrderedDict("SiO2" => 10.0, "TiO2" => 5.0)
+    variable_inputs = OrderedDict("SiO2" => [7.0, -4.0], "TiO2" => [8.0])
+    @test_throws ErrorException InputValidation.validate_positive_oxides(constant_inputs, variable_inputs)
+
+    # Test case 8: Oxides defined in both constant_inputs and variable_inputs, negative value in variable_inputs
+    constant_inputs = OrderedDict("SiO2" => 10.0, "TiO2" => 5.0)
+    variable_inputs = OrderedDict("SiO2" => [7.0, -4.0], "TiO2" => [8.0])
+    @test_throws ErrorException InputValidation.validate_positive_oxides(constant_inputs, variable_inputs)
 
 end
 
@@ -322,39 +322,93 @@ end
 
 end
 
-# Test overall prepare_inputs function
-@testset "Prepare inputs" begin
-    constant_inputs = OrderedDict()
-    constant_inputs["buffer"] = "qfm"
-    constant_inputs["bulk"] = OrderedDict("SiO2" => 38.4, "TiO2" => 0.7, "Al2O3" => 7.7, "Cr2O3" => 0.0,
-                                    "FeO" => 5.98, "MgO" => 9.95, "CaO" => 8.25, "Na2O" => 2.26,
-                                    "K2O" => 0.24, "O" => 4.0, "H2O" => 12.7)
+@testset "replace_zero_pressure!" begin
+    # Test case 1: Pressure in constant_inputs is 0.0, should be replaced with 0.001
+    constant_inputs = OrderedDict("P" => 0.0)
     variable_inputs = OrderedDict()
-    variable_inputs["P"] = collect(range(start=0.0, stop=1.0, step=0.1))
-    variable_inputs["buffer_offset"] = collect(range(start=-2., stop=2.0, step=0.5))
+    InputValidation.replace_zero_pressure!(constant_inputs, variable_inputs)
+    @test constant_inputs["P"] == 0.001
 
-    # Test prepare_inputs with valid inputs
-    @test begin
-        try
-            prepared_inputs = InputValidation.prepare_inputs(constant_inputs, variable_inputs)
-            @test "bulk" in keys(prepared_inputs)
-            @test "P" in keys(prepared_inputs)
-            @test "buffer" in keys(prepared_inputs)
-            true
-        catch e
-            false
-        end
-    end
+    # Test case 2: Pressure in constant_inputs is positive, should remain unchanged
+    constant_inputs = OrderedDict("P" => 1000.0)
+    variable_inputs = OrderedDict()
+    InputValidation.replace_zero_pressure!(constant_inputs, variable_inputs)
+    @test constant_inputs["P"] == 1000.0
 
-    # Test prepare_inputs with missing bulk (should trigger an error)
-    constant_inputs_no_bulk = OrderedDict("P" => 1.0, "buffer" => "qfm")
-    variable_inputs_no_bulk = OrderedDict()
-    @test_throws ErrorException InputValidation.prepare_inputs(constant_inputs_no_bulk, variable_inputs_no_bulk)
+    # Test case 3: Pressure in variable_inputs is a vector with some 0.0 values, should be replaced
+    constant_inputs = OrderedDict()
+    variable_inputs = OrderedDict("P" => [0.0, 1000.0, 0.0])
+    InputValidation.replace_zero_pressure!(constant_inputs, variable_inputs)
+    @test variable_inputs["P"] == [0.001, 1000.0, 0.001]
 
-    # Test prepare_inputs with missing pressure (should trigger an error)
-    constant_inputs_no_pressure = OrderedDict("buffer" => "qfm", "bulk" => OrderedDict("SiO2" => 53.0))
-    variable_inputs_no_pressure = OrderedDict()
-    @test_throws ErrorException InputValidation.prepare_inputs(constant_inputs_no_pressure, variable_inputs_no_pressure)
+    # Test case 4: Pressure in variable_inputs is a vector with no 0.0 values, should remain unchanged
+    constant_inputs = OrderedDict()
+    variable_inputs = OrderedDict("P" => [1000.0, 500.0])
+    InputValidation.replace_zero_pressure!(constant_inputs, variable_inputs)
+    @test variable_inputs["P"] == [1000.0, 500.0]
+
+    # Test case 5: Pressure defined in both constant_inputs and variable_inputs, 0.0 values replaced
+    constant_inputs = OrderedDict("P" => 0.0)
+    variable_inputs = OrderedDict("P" => [0.0, 1000.0])
+    InputValidation.replace_zero_pressure!(constant_inputs, variable_inputs)
+    @test constant_inputs["P"] == 0.001
+    @test variable_inputs["P"] == [0.001, 1000.0]
+
+    # Test case 6: Pressure in both constant_inputs and variable_inputs, no 0.0 values, should remain unchanged
+    constant_inputs = OrderedDict("P" => 1000.0)
+    variable_inputs = OrderedDict("P" => [1000.0, 500.0])
+    InputValidation.replace_zero_pressure!(constant_inputs, variable_inputs)
+    @test constant_inputs["P"] == 1000.0
+    @test variable_inputs["P"] == [1000.0, 500.0]
 
 end
 
+@testset "replace_zero_oxides!" begin
+    # Test case 1: Oxides in constant_inputs are 0.0, should be replaced with 0.001 (excluding H2O)
+    constant_inputs = OrderedDict("SiO2" => 0.0, "TiO2" => 0.0, "H2O" => 0.0)
+    variable_inputs = OrderedDict()
+    InputValidation.replace_zero_oxides!(constant_inputs, variable_inputs)
+    @test constant_inputs["SiO2"] == 0.001
+    @test constant_inputs["TiO2"] == 0.001
+    @test constant_inputs["H2O"] == 0.0  # H2O should not be replaced
+
+    # Test case 2: Oxides in constant_inputs are positive, should remain unchanged
+    constant_inputs = OrderedDict("SiO2" => 1000.0, "TiO2" => 500.0)
+    variable_inputs = OrderedDict()
+    InputValidation.replace_zero_oxides!(constant_inputs, variable_inputs)
+    @test constant_inputs["SiO2"] == 1000.0
+    @test constant_inputs["TiO2"] == 500.0
+
+    # Test case 3: Oxides in variable_inputs are 0.0, should be replaced with 0.001 (excluding H2O)
+    constant_inputs = OrderedDict()
+    variable_inputs = OrderedDict("SiO2" => [0.0, 10.0], "TiO2" => [0.0, 5.0], "H2O" => [0.0, 0.0])
+    InputValidation.replace_zero_oxides!(constant_inputs, variable_inputs)
+    @test variable_inputs["SiO2"] == [0.001, 10.0]
+    @test variable_inputs["TiO2"] == [0.001, 5.0]
+    @test variable_inputs["H2O"] == [0.0, 0.0]  # H2O should not be replaced
+
+    # Test case 4: Oxides in variable_inputs are positive, should remain unchanged
+    constant_inputs = OrderedDict()
+    variable_inputs = OrderedDict("SiO2" => [1000.0, 500.0], "TiO2" => [300.0, 200.0])
+    InputValidation.replace_zero_oxides!(constant_inputs, variable_inputs)
+    @test variable_inputs["SiO2"] == [1000.0, 500.0]
+    @test variable_inputs["TiO2"] == [300.0, 200.0]
+
+    # Test case 5: Pressure and oxides in both constant_inputs and variable_inputs, 0.0 values replaced
+    constant_inputs = OrderedDict("SiO2" => 0.0, "TiO2" => 1000.0)
+    variable_inputs = OrderedDict("TiO2" => [0.0, 500.0], "H2O" => [0.0, 0.0])
+    InputValidation.replace_zero_oxides!(constant_inputs, variable_inputs)
+    @test constant_inputs["SiO2"] == 0.001
+    @test constant_inputs["TiO2"] == 1000.0
+    @test variable_inputs["TiO2"] == [0.001, 500.0]
+    @test variable_inputs["H2O"] == [0.0, 0.0]  # H2O should not be replaced
+
+    # Test case 6: Oxides with no 0.0 values in both constant_inputs and variable_inputs, should remain unchanged
+    constant_inputs = OrderedDict("SiO2" => 1000.0, "TiO2" => 500.0)
+    variable_inputs = OrderedDict("SiO2" => [1000.0, 500.0], "TiO2" => [300.0, 200.0])
+    InputValidation.replace_zero_oxides!(constant_inputs, variable_inputs)
+    @test constant_inputs["SiO2"] == 1000.0
+    @test constant_inputs["TiO2"] == 500.0
+    @test variable_inputs["SiO2"] == [1000.0, 500.0]
+    @test variable_inputs["TiO2"] == [300.0, 200.0]
+end
