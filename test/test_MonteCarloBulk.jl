@@ -1,5 +1,4 @@
 using Test
-using Logging
 using Distributions
 
 include("../src/MonteCarloBulk.jl")
