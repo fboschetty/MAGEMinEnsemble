@@ -45,7 +45,7 @@ variable_inputs["P"] = collect(range(0.0, 1.0, step=1.0))  # Pressure in kbar.
 
 # Define parameters for simulation
 sys_in = "wt"
-output_dir = "/Users/felixboschetty/Documents/Julia/Test_Output1/"
+output_dir = "/Users/felixboschetty/Documents/Julia/Test_Parallel/"
 
 # Run the simulations
 results = GenerateEnsemble.run_simulations(T_array, constant_inputs, variable_inputs, sys_in, output_dir)
