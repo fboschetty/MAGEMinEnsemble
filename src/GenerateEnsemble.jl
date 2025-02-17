@@ -124,22 +124,25 @@ end
 
 
 """
-    results = run_simulations(T_array, constant_inputs, variable_inputs, sys_in)
+    results = run_simulations(constant_inputs, variable_inputs, bulk_frac)
 
 Generates and runs simulation ensembles from intensive variable grid.
 Extracts inputs from constant and variable_inputs, performs simulations, and saves the outputs to appropriately named .csv and metadata files.
 
 ## Inputs
-- `T_array` (Vector{Float64}): Array of descending temperatures to perform fractional crystallisation simulations in Celsius.
 - `constant_inputs` (Dict): Intensive variables, excluding T, that remain constant across simulation ensemble.
 - `variable_inputs` (Dict): Intensive variables, excluding T, that vary across the simulation ensemble.
-- `sys_in` (String): Indicate units for input bulk composition. E.g., "wt" for weight percent, "mol" for mole percent.
+- `bulk_frac` (String): Flag to indicate whether bulk or fractional crystallisation simulations should be run. "bulk" indicates bulk crystallisation, "frac" indicates fractional crystallisation.
+
+## Keyword Arguments
+- `sys_in` (String): Indicate units for input bulk composition (defaults to "wt", wt.%). "mol" for mol.%.
 - `output_dir` (String): Path to save output directory to (defaults to current directory).
+- `database` (String): Thermodynamic database to use (defaults to "ig": Green et al., 2025). See the [MAGEMin github](https://github.com/ComputationalThermodynamics/MAGEMin) for options.
 
 ## Outputs
 - `results` (Dict{String, Any}): simulation results, where keys are variable_input combinations.
 """
-function run_simulations(constant_inputs, variable_inputs, sys_in::String="wt", output_dir::Union{String, Nothing} = nothing)
+function run_simulations(constant_inputs, variable_inputs, bulk_frac::String, sys_in::String="wt", output_dir::Union{String, Nothing}=nothing, database::String="ig")
 
     output_dir = setup_output_directory(output_dir)
 
@@ -149,7 +152,6 @@ function run_simulations(constant_inputs, variable_inputs, sys_in::String="wt", 
 
     # Setup combinations for variable inputs
     combinations = IterTools.product(values(new_variable_inputs)...)  # All combinations of variable_inputs
-    println("Performing $(length(combinations)) fractional crystallisation simulations...")
 
     # Iterate through each combination of variable inputs
     for combination in combinations
@@ -162,28 +164,36 @@ function run_simulations(constant_inputs, variable_inputs, sys_in::String="wt", 
         # Update all_inputs with the constant_inputs and the updated variable_inputs
         all_inputs = merge(new_constant_inputs, updated_variable_inputs)
 
+        # Extract bulk comp, oxides and create array of temperatures
         bulk_init, Xoxides = get_bulk_oxides(all_inputs)
-
         T_array = create_T_array(all_inputs)
 
         # Initialize database and extract buffer
         if "buffer" in keys(all_inputs)
-            database = Initialize_MAGEMin("ig", verbose=false, buffer=all_inputs["buffer"])
+            database = Initialize_MAGEMin(database, verbose=false, buffer=all_inputs["buffer"])
             offset = get(all_inputs, "offset", 0.0)
         else
-            database = Initialize_MAGEMin("ig", verbose=false)
+            database = Initialize_MAGEMin(database, verbose=false)
             offset = nothing
         end
 
-        # Run fractional crystallisation simulation
-        output = FractionalCrystallisation.fractional_crystallisation(T_array, all_inputs["P"], bulk_init, database, Xoxides, sys_in, offset)
+        # Run crystallisation simulation
+        if bulk_frac == "bulk"
+            println("Performing $(length(combinations)) bulk crystallisation simulations...")
+            output = Crystallisation.bulk_crystallisation(T_array, all_inputs["P"], bulk_init, database, Xoxides, sys_in, offset)
+
+        elseif bulk_frac == "frac"
+            println("Performing $(length(combinations)) fractional crystallisation simulations...")
+            output = Crystallisation.fractional_crystallisation(T_array, all_inputs["P"], bulk_init, database, Xoxides, sys_in, offset)
+
+        end
 
         # Generate output filename
         output_file = generate_output_filename(new_variable_inputs, combination)  # Changes
 
         # Save simulation data to CSV file
         output_file_path = joinpath(output_dir, "$output_file")
-        MAGEMin_data2dataframe(output, "ig", output_file_path)
+        MAGEMin_data2dataframe(output, database, output_file_path)
 
         # Store result
         results[output_file] = output
