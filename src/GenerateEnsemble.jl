@@ -158,6 +158,7 @@ function run_simulations(
 
     # Setup combinations for variable inputs
     combinations = IterTools.product(values(new_variable_inputs)...)  # All combinations of variable_inputs
+    n_sim = $(length(combinations))
 
     # Iterate through each combination of variable inputs
     for combination in combinations
@@ -185,11 +186,11 @@ function run_simulations(
 
         # Run crystallisation simulation
         if bulk_frac == "bulk"
-            println("Performing $(length(combinations)) bulk crystallisation simulations...")
+            println("Performing $(n_sim) bulk crystallisation simulations...")
             output = Crystallisation.bulk_crystallisation(T_array, all_inputs["P"], bulk_init, database, Xoxides, sys_in, offset)
 
         elseif bulk_frac == "frac"
-            println("Performing $(length(combinations)) fractional crystallisation simulations...")
+            println("Performing $(n_sim)) fractional crystallisation simulations...")
             output = Crystallisation.fractional_crystallisation(T_array, all_inputs["P"], bulk_init, database, Xoxides, sys_in, offset)
 
         else
