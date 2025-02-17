@@ -8,13 +8,13 @@ using OrderedCollections
 
 Randomly sample normal distributions for each oxide defined by a bulk composition and its absolute uncertainty, n_samples times.
 
-Inputs
-    - bulk (AbstractDict{String, Float64}): Bulk composition with keys as oxide strings, e.g. SiO2.
-    - abs_unc (AbstractDict{String, Float64}): Absolute uncertainties with keys that correspond to those in bulk.
-    - n_samples (Int): number of times to sample normal distributions.
+## Inputs
+- `bulk` (AbstractDict{String, Float64}): Bulk composition with keys as oxide strings, e.g. SiO2.
+- `abs_unc` (AbstractDict{String, Float64}): Absolute uncertainties with keys that correspond to those in bulk.
+- `n_samples` (Int): number of times to sample normal distributions.
 
-Outputs
-    - bulk_mc (AbstractDict{String, Vector{Float64}}): Randomly sampled bulk composition.
+## Outputs
+- `bulk_mc` (AbstractDict{String, Vector{Float64}}): Randomly sampled bulk composition.
 """
 function generate_bulk_mc(bulk::AbstractDict{String, Float64}, abs_unc::AbstractDict{String, Float64}, n_samples::Int) :: AbstractDict{String, Vector{Float64}}
     # Ensure output matches input types

@@ -113,3 +113,25 @@ end
     @test_throws ErrorException GenerateEnsemble.setup_output_directory(temp_dir)
 
 end
+
+@testset "create_T_array" begin
+    # Test case 1: Normal increasing range
+    inputs = OrderedDict("T_start" => 0.0, "T_stop" => 10.0, "T_step" => 2.0)
+    @test GenerateEnsemble.create_T_array(inputs) == [0.0, 2.0, 4.0, 6.0, 8.0, 10.0]
+
+    # Test case 2: Normal decreasing range
+    inputs = OrderedDict("T_start" => 10.0, "T_stop" => 0.0, "T_step" => 2.0)
+    @test GenerateEnsemble.create_T_array(inputs) == [10.0, 8.0, 6.0, 4.0, 2.0, 0.0]
+
+    # Test case 3: Single element range
+    inputs = OrderedDict("T_start" => 5.0, "T_stop" => 5.0, "T_step" => 1.0)
+    @test GenerateEnsemble.create_T_array(inputs) == [5.0]
+
+    # Test case 4: Step size is negative but should still work
+    inputs = OrderedDict("T_start" => 10.0, "T_stop" => 0.0, "T_step" => -2.0)
+    @test GenerateEnsemble.create_T_array(inputs) == [10.0, 8.0, 6.0, 4.0, 2.0, 0.0]
+
+    # Test case 5: Error when step size is zero
+    inputs = OrderedDict("T_start" => 0.0, "T_stop" => 10.0, "T_step" => 0.0)
+    @test_throws ErrorException("The temperature step cannot be zero.") GenerateEnsemble.create_T_array(inputs)
+end

@@ -5,11 +5,31 @@ using MAGEMin_C
 using IterTools
 using OrderedCollections
 using FileIO
+using MAGEMinEnsemble
 
-include("FractionalCrystallisation.jl")
-include("InputValidation.jl")
-using .FractionalCrystallisation
-using .InputValidation
+export run_simulations
+
+"""
+    T_array = create_T_array(all_inputs)
+
+Construct an array of temperatures from an initial temperature (T_start),
+final temperature (T_stop) and temperature increment (T_step).
+Ensure that the T_step is the correct sign.
+"""
+function create_T_array(all_inputs::OrderedDict)::Vector{Float64}
+    T_start = all_inputs["T_start"]
+    T_stop = all_inputs["T_stop"]
+    T_step = all_inputs["T_step"]
+
+    if T_step == 0.
+        error("The temperature step cannot be zero.")
+
+    elseif T_step > 0. && T_start > T_stop
+        T_step *= -1
+    end
+
+    return collect(range(start=T_start, stop=T_stop, step=T_step))
+end
 
 
 """
@@ -109,14 +129,17 @@ end
 Generates and runs simulation ensembles from intensive variable grid.
 Extracts inputs from constant and variable_inputs, performs simulations, and saves the outputs to appropriately named .csv and metadata files.
 
-Inputs:
-    - T_array (Vector{Float64}): Array of descending temperatures to perform fractional crystallisation simulations in Celsius.
-    - constant_inputs (Dict): Intensive variables, excluding T, that remain constant across simulation ensemble.
-    - variable_inputs (Dict): Intensive variables, excluding T, that vary across the simulation ensemble.
-    - sys_int (String): Indicate units for input bulk composition. E.g., "wt" for weight percent, "mol" for mole percent.
-    - output_dir (String): Path to save output directory to (defaults to current directory).
+## Inputs
+- `T_array` (Vector{Float64}): Array of descending temperatures to perform fractional crystallisation simulations in Celsius.
+- `constant_inputs` (Dict): Intensive variables, excluding T, that remain constant across simulation ensemble.
+- `variable_inputs` (Dict): Intensive variables, excluding T, that vary across the simulation ensemble.
+- `sys_in` (String): Indicate units for input bulk composition. E.g., "wt" for weight percent, "mol" for mole percent.
+- `output_dir` (String): Path to save output directory to (defaults to current directory).
+
+## Outputs
+- `results` (Dict{String, Any}): simulation results, where keys are variable_input combinations.
 """
-function run_simulations(T_array::Vector{Float64}, constant_inputs::OrderedDict{Any, Any}, variable_inputs::OrderedDict{Any, Any}, sys_in::String, output_dir::String = nothing) :: Dict
+function run_simulations(constant_inputs::OrderedDict{Any, Any}, variable_inputs::OrderedDict{Any, Any}, sys_in::String="wt", output_dir::String = nothing)::Dict{String, Any}
 
     output_dir = setup_output_directory(output_dir)
 
@@ -139,7 +162,9 @@ function run_simulations(T_array::Vector{Float64}, constant_inputs::OrderedDict{
         # Update all_inputs with the constant_inputs and the updated variable_inputs
         all_inputs = merge(new_constant_inputs, updated_variable_inputs)
 
-        bulk_init, Xoxides = get_bulk_oxides(all_inputs)   # Changes
+        bulk_init, Xoxides = get_bulk_oxides(all_inputs)
+
+        T_array = create_T_array(all_inputs)
 
         # Initialize database and extract buffer
         if "buffer" in keys(all_inputs)
@@ -168,7 +193,5 @@ function run_simulations(T_array::Vector{Float64}, constant_inputs::OrderedDict{
 
     return results
 end
-
-export run_simulations
 
 end

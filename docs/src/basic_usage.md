@@ -1,15 +1,21 @@
 # Basic Usage
 
-Simply, `MAGEMinEnsemble` provides an interface to define a parameter space over which many `MAGEMin` simulations can be performed. It does this using two ordered dictionaries: `constant_inputs` and `variable_inputs`. As their names suggest, the user uses `constant_inputs` to assign the intensive variables that do not change across the ensemble of simulations. `variable_inputs` is used to assign intensive variables that change across the ensemble.
+Simply put, `MAGEMinEnsemble` provides an interface to define a parameter space over which many `MAGEMin` simulations can be performed. It does this using two ordered dictionaries: `constant_inputs` and `variable_inputs`. As their names suggest, keys in `constant_inputs` assign the intensive variables that do not change across the ensemble of simulations. The keys in `variable_inputs` assign intensive variables that change across the ensemble.
 
 Intensive variables are assigned using key-value pairs, where the key is always a string. `constant_inputs` contains values that are single floats or strings. `variable_inputs` contains values that are vectors of floats or strings. The same key cannot be assigned in both `constant_inputs` and `variable_inputs`: a parameter cannot be defined as both constant and variable in the same simulation.
 
 The below example shows how the key and values of `constant_inputs` and `variable_inputs` can be assigned. These will define an ensemble of simulations over variable pressure, water and oxygen fugacity space. For a description of the available intensive variables, see section [Intensive Variables](@ref intensive_variables).
 
 ```Julia
-# Assign a constant bulk composition and oxygen fugacity buffer
+# Assign a constant temperature range, bulk composition and oxygen fugacity buffer
 constant_inputs = OrderedDict{
-    # Set bulk composition oxides
+    # Set the initial, final and incremental
+    # temperature in degrees celsius
+    "T_start" => 1400.,
+    "T_stop" => 800.,
+    "T_step" => -1.,
+
+    # Set bulk composition oxides in wt.% oxide
     "SiO2"  => 44.66,
     "TiO2"  =>  1.42,
     "Al2O3" => 15.90,
@@ -39,22 +45,15 @@ variable_inputs = OrderedDict{
     "H2O" => collect(range(start=0.0, stop=8.0, step=1.0))
 }
 
-sys_in = "wt"  # Bulk composition defined in oxide wt%
-
-# Set an initial temperature of 1400 celsius, final temperature
-# of 800 celsius, and temperature step of -5 celsius.
-T_array = collect(range(start=1400, stop=800, step=-5))
-
 # Run the simulations, store result in variable Output
 Output = GenerateEnsemble.run_simulations(
-    T_array,
     constant_inputs,
     variable_inputs,
-    sys_in
     )
 ```
-The temperature is set outside of `constant_inputs` and `variable_inputs` and is defined as an array of temperatures. Currently only crystallisation simulations can be run in MAGEMinEnsemble, so the temperature array must be descending.
 
-`sys_in = "wt"` tells `MAGEMinEnsemble` that the defined bulk composition is in oxide wt.%.
 
-The `T_array`, `constant_inputs`, `variable_inputs`, and `sys_in` are passed to the `run_simulations()` function to generate and run the ensemble. The results will be saved as appropriately named .csv files (in this case "P=X_offset=Y_H2O=Z.csv, where X, Y and Z refer to the combination of values in `variable_inputs`), accompanied by metadata.txt files.To allow for further processing in Julia, the results are also stored in the variable `Output`.
+The `constant_inputs` and `variable_inputs` are passed to the `run_simulations()` function to generate and run the ensemble. The results will be saved as appropriately named .csv files. For this ensemble, they will have the form "P=X\_offset=Y\_H2O=Z.csv", where X, Y and Z refer to the combination of values in `variable_inputs`.
+
+
+The .csv files will be accompanied by metadata.txt files. To allow for further processing in Julia, the results are also stored in the variable `Output`.

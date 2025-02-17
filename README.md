@@ -5,7 +5,6 @@ MAGEMinEnsemble is a Julia-based software designed to perform an ensemble of fra
 The key features MAGEMinEnsemble provides are:
 - Constant and variable intensive parameters are defined in simple dictionaries.
 - An ensemble of fractional crystallisation simulations is assembled and ran across the defined parameter space.
-- Multi-threading to perform simulations in parallel.
 - All outputs are saved into appropriately named .csv files.
 - Simple Monte Carlo functionality to assess the impact of uncertainties in bulk composition.
 

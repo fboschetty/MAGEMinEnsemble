@@ -1,7 +1,7 @@
 name = "MAGEMinEnsemble"
 uuid = "d0dcaf60-8820-4817-989b-13fe885218e4"
 authors = "Felix Boschetty <felix.boschetty@manchester.ac.uk>"
-repo = "https://github.com/fboschetty/MAGEMinEnsemble"
+repo = "https://github.com/fboschetty/MAGEMinEnsemble.git"
 version = "0.1.0"
 
 [deps]

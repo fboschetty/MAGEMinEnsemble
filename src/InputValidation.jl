@@ -2,6 +2,7 @@ module InputValidation
 
 using OrderedCollections
 
+export prepare_inputs
 
 """
     check_constant_inputs_values(constant_inputs)
@@ -45,12 +46,12 @@ end
 Check that list of required inputs is defined in either constant_inputs or variable_inputs
 """
 function check_required_inputs(constant_inputs::OrderedDict, variable_inputs::OrderedDict)::Nothing
-    required_inputs = ["P"]
+    required_inputs = ["P", "T_start", "T_stop", "T_step"]
 
     # Check if each required input is present in either constant_inputs or variable_inputs
     for input in required_inputs
         if !(haskey(constant_inputs, input) || haskey(variable_inputs, input))
-            error("Required input '$input' is missing from both constant_inputs and variable_inputs.")
+            error("Required input '$input' is not present in either constant_inputs or variable_inputs.")
         end
     end
 end
@@ -72,7 +73,7 @@ end
 
 
 """
-    oxides = check_keys_oxygen(d)
+    oxides = check_keys_oxygen(od)
 
 Returns keys in an ordered dictionary (`od`) that contain a capital "O".
 """
@@ -177,7 +178,7 @@ end
 
 
 """
-    replace_zero_pressure!(constant_inputs, variable_inputs)
+    new_constant_inputs, new_variable_inputs = replace_zero_pressure!(constant_inputs, variable_inputs)
 
 Replaces pressures defined as 0.0 with 0.001
 """
@@ -296,13 +297,13 @@ end
 
 Prepare and validate both constant_inputs and variable_inputs prior to ensure they are suitable for MAGEMin.
 
-Inputs:
-    - constant_inputs (Dict): inputs that will remain unchanged between MAGEMin simulations.
-    - variable_inputs (Dict): inputs that vary across MAGEMin simulations.
+## Inputs:
+- `constant_inputs` (Dict): inputs that will remain unchanged between MAGEMin simulations.
+- `variable_inputs` (Dict): inputs that vary across MAGEMin simulations.
 
-Outputs:
-    - updated_constant_inputs (Dict): inputs that will remain unchanged between MAGEMin simulations.
-    - updated_variable_inputs (Dict): inputs that vary across MAGEMin simulations.
+## Outputs:
+- `updated_constant_inputs` (Dict): inputs that will remain unchanged between MAGEMin simulations.
+- `updated_variable_inputs` (Dict): inputs that vary across MAGEMin simulations.
 """
 function prepare_inputs(constant_inputs::OrderedDict, variable_inputs::OrderedDict)::Tuple{OrderedDict, OrderedDict}
     check_constant_inputs_values(constant_inputs)
@@ -326,6 +327,5 @@ function prepare_inputs(constant_inputs::OrderedDict, variable_inputs::OrderedDi
     return new_constant_inputs, new_variable_inputs
 end
 
-export prepare_inputs
 
 end

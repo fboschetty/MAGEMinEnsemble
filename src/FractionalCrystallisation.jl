@@ -5,22 +5,23 @@ using MAGEMin_C
 using OrderedCollections
 using IterTools
 
-# Main fractional crystallisation function
+export fractional_crystallisation
+
 """
-    fractional_crystallisation(T, P, bulk_init, database, oxides, max_steps, sys_in) -> Out
+    Out = fractional_crystallisation(T, P, bulk_init, database, oxides, max_steps, sys_in)
 
 Perform a fractional crystallisation simulation using MAGEMin at constant intensive variables e.g., pressure, oxygen fugacity.
 
-Inputs
-    - T (Vector{Float64}): Temperatures in degrees Celsius.
-    - P (Float64): Pressure in kbar.
-    - bulk_init (Vector{Float64}): Initial bulk composition.
-    - database: MAGEMin database for simulations. For example, "ig" is the igneous database of Holland et al., 2018.
-    - oxides (Vector{String}): Oxides that correspond to values in the bulk composition. See MAGEMin documentation for accepted oxides.
-    - sys_in (String): Unit for initial bulk composition, can be "wt" or "mol", for wt(defaults to "wt")
+## Inputs
+- `T` (Vector{Float64}): Temperatures in degrees Celsius.
+- `P` (Float64): Pressure in kbar.
+- `bulk_init` (Vector{Float64}): Initial bulk composition.
+- `database`: MAGEMin database for simulations. For example, "ig" is the igneous database of Holland et al., 2018.
+- `oxides` (Vector{String}): Oxides that correspond to values in the bulk composition. See MAGEMin documentation for accepted oxides.
+- `sys_in` (String): Unit for initial bulk composition, can be "wt" or "mol", for wt(defaults to "wt")
 
-Outputs
-    - Out (Vector{MAGEMin_C.gmin_struct{Float64, Int64}}): array of simulation outputs for each temperature step.
+## Outputs
+- `Out` (Vector{MAGEMin_C.gmin_struct{Float64, Int64}}): array of simulation outputs for each temperature step.
 """
 function fractional_crystallisation(T_array::Vector{Float64}, P::Float64, bulk_init::Vector{Float64}, database, oxides::Vector{String}, sys_in::String, offset::Union{Float64, Nothing})
     P_array = fill(P, length(T_array))
@@ -67,6 +68,4 @@ function fractional_crystallisation(T_array::Vector{Float64}, P::Float64, bulk_i
     return output[1:current_T_step-1]  # Return only defined indices
 end
 
-export fractional_crystallisation
-
-end  # End of module
+end

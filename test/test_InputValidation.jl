@@ -413,3 +413,24 @@ end
     @test new_variable_inputs["TiO2"] == [300.0, 200.0]
 end
 
+@testset "check_required_inputs" begin
+    # Test case 1: All required inputs in constant_inputs
+    constant_inputs = OrderedDict("P" => 1.0, "T_start" => 0.0, "T_stop" => 10.0, "T_step" => 2.0)
+    variable_inputs = OrderedDict()
+    @test InputValidation.check_required_inputs(constant_inputs, variable_inputs) === nothing
+
+    # Test case 2: All required inputs in variable_inputs
+    constant_inputs = OrderedDict()
+    variable_inputs = OrderedDict("P" => 1.0, "T_start" => 0.0, "T_stop" => 10.0, "T_step" => 2.0)
+    @test InputValidation.check_required_inputs(constant_inputs, variable_inputs) === nothing
+
+    # Test case 3: Required inputs split between both dictionaries
+    constant_inputs = OrderedDict("P" => 1.0, "T_start" => 0.0)
+    variable_inputs = OrderedDict("T_stop" => 10.0, "T_step" => 2.0)
+    @test InputValidation.check_required_inputs(constant_inputs, variable_inputs) === nothing
+
+    # Test case 4: Missing a required input
+    constant_inputs = OrderedDict("P" => 1.0, "T_start" => 0.0)
+    variable_inputs = OrderedDict("T_stop" => 10.0)  # Missing "T_step"
+    @test_throws ErrorException("Required input 'T_step' is not present in either constant_inputs or variable_inputs.") InputValidation.check_required_inputs(constant_inputs, variable_inputs)
+end
