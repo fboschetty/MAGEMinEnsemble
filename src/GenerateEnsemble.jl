@@ -137,7 +137,7 @@ Extracts inputs from constant and variable_inputs, performs simulations, and sav
 ## Keyword Arguments
 - `sys_in` (String): Indicate units for input bulk composition (defaults to "wt", wt.%). "mol" for mol.%.
 - `output_dir` (String): Path to save output directory to (defaults to current directory).
-- `database` (String): Thermodynamic database to use (defaults to "ig": Green et al., 2025). See the [MAGEMin github](https://github.com/ComputationalThermodynamics/MAGEMin) for options.
+- `td_database` (String): Thermodynamic database to use (defaults to "ig": Green et al., 2025). See the [MAGEMin github](https://github.com/ComputationalThermodynamics/MAGEMin) for options.
 
 ## Outputs
 - `results` (Dict{String, Any}): simulation results, where keys are variable_input combinations.
@@ -148,7 +148,8 @@ function run_simulations(
     bulk_frac::String,
     sys_in::String="wt",
     output_dir::Union{String, Nothing}=nothing,
-    database::String="ig") where T <: Union{Float64, String}
+    td_database::String="ig"
+    ) where T <: Union{Float64, String}
 
     output_dir = setup_output_directory(output_dir)
 
@@ -177,10 +178,10 @@ function run_simulations(
 
         # Initialize database and extract buffer
         if "buffer" in keys(all_inputs)
-            database = Initialize_MAGEMin(database, verbose=false, buffer=all_inputs["buffer"])
+            database = Initialize_MAGEMin(td_database, verbose=false, buffer=all_inputs["buffer"])
             offset = get(all_inputs, "offset", 0.0)
         else
-            database = Initialize_MAGEMin(database, verbose=false)
+            database = Initialize_MAGEMin(td_database, verbose=false)
             offset = nothing
         end
 
@@ -202,7 +203,7 @@ function run_simulations(
 
         # Save simulation data to CSV file
         output_file_path = joinpath(output_dir, "$output_file")
-        MAGEMin_data2dataframe(output, database, output_file_path)
+        MAGEMin_data2dataframe(output, td_database, output_file_path)
 
         # Store result
         results[output_file] = output

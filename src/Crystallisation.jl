@@ -23,7 +23,7 @@ Perform a fractional crystallisation simulation using MAGEMin at constant intens
 ## Outputs
 - `Out` (Vector{MAGEMin_C.gmin_struct{Float64, Int64}}): array of simulation outputs for each temperature step.
 """
-function fractional_crystallisation(T_array::Vector{Float64}, P::Float64, bulk_init::Vector{Float64}, database, oxides::Vector{String}, sys_in::String, offset::Union{Float64, Nothing})
+function fractional_crystallisation(T_array::Vector{Float64}, P::Float64, bulk_init::Vector{Float64}, database, oxides::Vector{String}, sys_in::String, offset::Union{Float64, Nothing}) :: Array{MAGEMin_C.gmin_struct{Float64, Int64}, 1}
     P_array = fill(P, length(T_array))
     melt_fraction = 1.0
     bulk = deepcopy(bulk_init)
@@ -85,7 +85,7 @@ end
 ## Outputs
 - `Out` (Vector{MAGEMin_C.gmin_struct{Float64, Int64}}): array of simulation outputs for each temperature step.
 """
-function bulk_crystallisation(T_array::Vector{Float64}, P::Float64, bulk_init::Vector{Float64}, database, oxides::Vector{String}, sys_in::String, offset::Union{Float64, Nothing})
+function bulk_crystallisation(T_array::Vector{Float64}, P::Float64, bulk_init::Vector{Float64}, database, oxides::Vector{String}, sys_in::String, offset::Union{Float64, Nothing}) :: Array{MAGEMin_C.gmin_struct{Float64, Int64}, 1}
     P_array = fill(P, length(T_array))
     melt_fraction = 1.0
     bulk = deepcopy(bulk_init)
