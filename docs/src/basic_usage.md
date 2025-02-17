@@ -53,7 +53,8 @@ Output = GenerateEnsemble.run_simulations(
 ```
 
 
-The `constant_inputs` and `variable_inputs` are passed to the `run_simulations()` function to generate and run the ensemble. The results will be saved as appropriately named .csv files. For this ensemble, they will have the form "P=X\_offset=Y\_H2O=Z.csv", where X, Y and Z refer to the combination of values in `variable_inputs`.
+The `constant_inputs` and `variable_inputs` are passed to the `run_simulations()` function to generate and run the ensemble. The results will be saved as appropriately named .csv files. For this ensemble, they will have the form "P=X\_offset=Y\_H2O=Z.csv", where X, Y and Z refer to the combination of values in `variable_inputs`. The .csv files will be accompanied by metadata.txt files.
 
+![Output File Examples](OutputFile_Examples.png)
 
-The .csv files will be accompanied by metadata.txt files. To allow for further processing in Julia, the results are also stored in the variable `Output`.
+To allow for further processing in Julia, the results are also stored in the variable `Output`.

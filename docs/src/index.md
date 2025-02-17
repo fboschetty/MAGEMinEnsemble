@@ -13,6 +13,13 @@ This package is a work in progress and additional functionality will be added in
 
 ## Installation
 `MAGEMinEnsemble` is currently unregistered and must be installed using Pkg and directing it to the MAGEMinEnsemble.jl source file.
+Download this repository. Add the following to the top of your script.
+```Julia
+using Pkg
+Pkg.add(path="Path/To/MAGEMinEnsemble")
+
+using MAGEMinEnsemble
+```
 
 ## Usage
 * see [Basic Usage](basic_usage.md) for an introduction to using the package;

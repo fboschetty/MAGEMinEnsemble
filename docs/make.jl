@@ -3,7 +3,6 @@ using Documenter, MAGEMinEnsemble
 
 makedocs(
     sitename="MAGEMinEnsemble",
-
     modules = [MAGEMinEnsemble],
     authors = "Felix Boschetty",
     format = Documenter.HTML(),
@@ -15,7 +14,7 @@ makedocs(
     ]
 )
 
-deploydocs(;
+deploydocs(
     repo = "https://github.com/fboschetty/MAGEMinEnsemble.git",
     devbranch = "main"
 )
