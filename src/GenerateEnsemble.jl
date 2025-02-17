@@ -124,7 +124,14 @@ end
 
 
 """
-    results = run_simulations(constant_inputs, variable_inputs, bulk_frac)
+    run_simulations(
+    constant_inputs::OrderedDict{String, T},
+    variable_inputs::OrderedDict{String, Vector{T}},
+    bulk_frac::String,
+    sys_in::String="wt",
+    output_dir::Union{String, Nothing}=nothing,
+    td_database::String="ig"
+    ) where T <: Union{Float64, String}
 
 Generates and runs simulation ensembles from intensive variable grid.
 Extracts inputs from constant and variable_inputs, performs simulations, and saves the outputs to appropriately named .csv and metadata files.
@@ -137,7 +144,7 @@ Extracts inputs from constant and variable_inputs, performs simulations, and sav
 ## Keyword Arguments
 - `sys_in` (String): Indicate units for input bulk composition (defaults to "wt", wt.%). "mol" for mol.%.
 - `output_dir` (String): Path to save output directory to (defaults to current directory).
-- `td_database` (String): Thermodynamic database to use (defaults to "ig": Green et al., 2025). See the [MAGEMin github](https://github.com/ComputationalThermodynamics/MAGEMin) for options.
+- `td_database` (String): Flag indicating thermodynamic database to use (defaults to "ig": Green et al., 2025). See the [MAGEMin github](https://github.com/ComputationalThermodynamics/MAGEMin) for options.
 
 ## Outputs
 - `results` (Dict{String, Any}): simulation results, where keys are variable_input combinations.
@@ -172,7 +179,7 @@ function run_simulations(
         # Update all_inputs with the constant_inputs and the updated variable_inputs
         all_inputs = merge(new_constant_inputs, updated_variable_inputs)
 
-        # Extract bulk comp, oxides and create array of temperatures
+        # Extract bulk comp and oxides, create array of temperatures
         bulk_init, Xoxides = get_bulk_oxides(all_inputs)
         T_array = create_T_array(all_inputs)
 
@@ -197,6 +204,8 @@ function run_simulations(
         else
             ErrorException("bulk_frac must be either 'bulk' for bulk crystallisation, or 'frac' for fractional crystallisation.")
         end
+        println(typeof(output))
+        println(length(output))
 
         # Generate output filename
         output_file = generate_output_filename(new_variable_inputs, combination)

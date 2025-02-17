@@ -16,7 +16,7 @@ Perform a fractional crystallisation simulation using MAGEMin at constant intens
 - `T_array` (Vector{Float64}): Temperatures in degrees Celsius.
 - `P` (Float64): Pressure in kbar.
 - `bulk_init` (Vector{Float64}): Initial bulk composition.
-- `database`: MAGEMin database for simulations. For example, "ig" is the igneous database of Holland et al., 2018.
+- `database`: MAGEMin database for simulations.
 - `oxides` (Vector{String}): Oxides that correspond to values in the bulk composition. See MAGEMin documentation for accepted oxides.
 - `sys_in` (String): Unit for initial bulk composition, can be "wt" or "mol", for wt(defaults to "wt")
 
