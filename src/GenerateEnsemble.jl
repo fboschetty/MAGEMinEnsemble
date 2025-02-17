@@ -130,8 +130,8 @@ Generates and runs simulation ensembles from intensive variable grid.
 Extracts inputs from constant and variable_inputs, performs simulations, and saves the outputs to appropriately named .csv and metadata files.
 
 ## Inputs
-- `constant_inputs` (Dict): Intensive variables, excluding T, that remain constant across simulation ensemble.
-- `variable_inputs` (Dict): Intensive variables, excluding T, that vary across the simulation ensemble.
+- `constant_inputs` (OrderedDict): Intensive variables, excluding T, that remain constant across simulation ensemble.
+- `variable_inputs` (OrderedDict): Intensive variables, excluding T, that vary across the simulation ensemble.
 - `bulk_frac` (String): Flag to indicate whether bulk or fractional crystallisation simulations should be run. "bulk" indicates bulk crystallisation, "frac" indicates fractional crystallisation.
 
 ## Keyword Arguments
@@ -142,7 +142,13 @@ Extracts inputs from constant and variable_inputs, performs simulations, and sav
 ## Outputs
 - `results` (Dict{String, Any}): simulation results, where keys are variable_input combinations.
 """
-function run_simulations(constant_inputs, variable_inputs, bulk_frac::String, sys_in::String="wt", output_dir::Union{String, Nothing}=nothing, database::String="ig")
+function run_simulations(
+    constant_inputs::OrderedDict{String, T},
+    variable_inputs::OrderedDict{String, Vector{T}},
+    bulk_frac::String,
+    sys_in::String="wt",
+    output_dir::Union{String, Nothing}=nothing,
+    database::String="ig") where T <: Union{Float64, String}
 
     output_dir = setup_output_directory(output_dir)
 
