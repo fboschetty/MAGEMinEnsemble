@@ -41,7 +41,7 @@ If directory contains .csv files throws and error and tells the user to choose a
 """
 function setup_output_directory(output_dir::Union{String, Nothing})::String
     # if output_dir isn't specified, use current directory
-    output_dir = output_dir == "" || output_dir == nothing ? pwd() : output_dir
+    output_dir = output_dir == "" || output_dir == nothing ? joinpath(pwd()) : output_dir
 
     # Check if the output directory exists, if not, create it
     if !isdir(output_dir)
@@ -139,13 +139,13 @@ Extracts inputs from constant and variable_inputs, performs simulations, and sav
 ## Outputs
 - `results` (Dict{String, Any}): simulation results, where keys are variable_input combinations.
 """
-function run_simulations(constant_inputs::OrderedDict{Any, Any}, variable_inputs::OrderedDict{Any, Any}, sys_in::String="wt", output_dir::String = nothing)::Dict{String, Any}
+function run_simulations(constant_inputs, variable_inputs, sys_in::String="wt", output_dir::Union{String, Nothing} = nothing)
 
     output_dir = setup_output_directory(output_dir)
 
     results = Dict{String, Any}()  # Dictionary to store simulation results
 
-    new_constant_inputs, new_variable_inputs = InputValidation.prepare_inputs(constant_inputs, variable_inputs)
+    new_constant_inputs, new_variable_inputs = MAGEMinEnsemble.InputValidation.prepare_inputs(constant_inputs, variable_inputs)
 
     # Setup combinations for variable inputs
     combinations = IterTools.product(values(new_variable_inputs)...)  # All combinations of variable_inputs

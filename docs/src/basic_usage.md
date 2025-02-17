@@ -8,7 +8,7 @@ The below example shows how the key and values of `constant_inputs` and `variabl
 
 ```Julia
 # Assign a constant temperature range, bulk composition and oxygen fugacity buffer
-constant_inputs = OrderedDict{
+constant_inputs = OrderedDict(
     # Set the initial, final and incremental
     # temperature in degrees celsius
     "T_start" => 1400.,
@@ -29,21 +29,21 @@ constant_inputs = OrderedDict{
 
     # Set constant oxygen fugacity buffer
     "buffer" => "qfm"
-}
+)
 
 # Assign variable pressure, oxygen fugacity buffer offset and water content
-variable_inputs = OrderedDict{
-    # Set variable pressure between 0.0 and 5.0 kbar in incremenets of 1.0
-    "P" => collect(range(start=0.0, stop=5.0, step=1.0))
+variable_inputs = OrderedDict(
+    # Set variable pressure between 0.0 and 5.0 kbar in increments of 1.0
+    "P" => collect(range(start=0.0, stop=5.0, step=1.0)),
 
     # Set variable oxygen fugacity buffer offset from
     # QFM-2.0 to QFM+2.0 in increments of 1.0 log units
-    "offset" => [-2.0, -1.0, 0.0, 1.0, 2.0]
+    "offset" => [-2.0, -1.0, 0.0, 1.0, 2.0],
 
     # Set variable water content from 0.0 to 8.0 wt%
     #in increments of 1.0
     "H2O" => collect(range(start=0.0, stop=8.0, step=1.0))
-}
+)
 
 # Run the simulations, store result in variable Output
 Output = GenerateEnsemble.run_simulations(
