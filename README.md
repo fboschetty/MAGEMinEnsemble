@@ -1,5 +1,7 @@
 # MAGEMinEnsemble.jl
 
+[![docsstable](https://img.shields.io/badge/docs-stable-blue.svg)](https://fboschetty.github.io/MAGEMinEnsemble/)
+
 MAGEMinEnsemble is a Julia-based software designed to perform an ensemble of fractional crystallisation simulations across a defined intensive variable space. It utilises the Julia wrapper of [MAGEMin](https://github.com/ComputationalThermodynamics/MAGEMin_C.jl) to perform these simulations. The software is heavily inspired by Zack Gainsforth's [alphaMELTSEnsemble](https://github.com/ZGainsforth/alphaMELTSEnsemble), which similarly performs a series of thermodynamic simulations of magmatic systems using alphaMELTS.
 
 The key features MAGEMinEnsemble provides are:
@@ -10,4 +12,4 @@ The key features MAGEMinEnsemble provides are:
 
 This package is a work in progress and additional functionality will be added in the future.
 
-All further information is provided in the documentation that can be found online.
+All further information is provided in the documentation that can be found [online](https://fboschetty.github.io/MAGEMinEnsemble/).
