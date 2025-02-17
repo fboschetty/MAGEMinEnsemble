@@ -204,9 +204,8 @@ function run_simulations(
         else
             ErrorException("bulk_frac must be either 'bulk' for bulk crystallisation, or 'frac' for fractional crystallisation.")
         end
-        println(typeof(output))
-        println(length(output))
 
+        println("boo")
         # Generate output filename
         output_file = generate_output_filename(new_variable_inputs, combination)
 
