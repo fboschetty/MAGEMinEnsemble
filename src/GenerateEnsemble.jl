@@ -142,7 +142,7 @@ Extracts inputs from constant and variable_inputs, performs simulations, and sav
 ## Outputs
 - `results` (Dict{String, Any}): simulation results, where keys are variable_input combinations.
 """
-function run_simulations(constant_inputs, variable_inputs, bulk_frac::String, sys_in::String="wt", output_dir::Union{String, Nothing}=nothing, database::String="ig")
+function run_simulations(constant_inputs::OrderedDict, variable_inputs::OrderedDict, bulk_frac::String, sys_in::String="wt", output_dir::Union{String, Nothing}=nothing, database::String="ig")
 
     output_dir = setup_output_directory(output_dir)
 
@@ -186,10 +186,12 @@ function run_simulations(constant_inputs, variable_inputs, bulk_frac::String, sy
             println("Performing $(length(combinations)) fractional crystallisation simulations...")
             output = Crystallisation.fractional_crystallisation(T_array, all_inputs["P"], bulk_init, database, Xoxides, sys_in, offset)
 
+        else
+            ErrorException("bulk_frac must be either 'bulk' for bulk crystallisation, or 'frac' for fractional crystallisation.")
         end
 
         # Generate output filename
-        output_file = generate_output_filename(new_variable_inputs, combination)  # Changes
+        output_file = generate_output_filename(new_variable_inputs, combination)
 
         # Save simulation data to CSV file
         output_file_path = joinpath(output_dir, "$output_file")

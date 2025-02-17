@@ -5,7 +5,7 @@ Modules = [MAGEMinEnsemble]
 
 ## `FractionalCrystallisation` Submodule
 ```@autodocs
-Modules = [MAGEMinEnsemble.FractionalCrystallisation]
+Modules = [MAGEMinEnsemble.Crystallisation]
 ```
 
 ## `MonteCarloBulk` Submodule
