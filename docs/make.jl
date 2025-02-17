@@ -16,5 +16,4 @@ makedocs(
 
 deploydocs(
     repo = "https://github.com/fboschetty/MAGEMinEnsemble.git",
-    devbranch = "main"
 )

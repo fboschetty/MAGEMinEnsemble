@@ -142,7 +142,7 @@ Extracts inputs from constant and variable_inputs, performs simulations, and sav
 ## Outputs
 - `results` (Dict{String, Any}): simulation results, where keys are variable_input combinations.
 """
-function run_simulations(constant_inputs::OrderedDict, variable_inputs::OrderedDict, bulk_frac::String, sys_in::String="wt", output_dir::Union{String, Nothing}=nothing, database::String="ig")
+function run_simulations(constant_inputs, variable_inputs, bulk_frac::String, sys_in::String="wt", output_dir::Union{String, Nothing}=nothing, database::String="ig")
 
     output_dir = setup_output_directory(output_dir)
 
