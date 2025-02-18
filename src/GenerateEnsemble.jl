@@ -150,13 +150,13 @@ Extracts inputs from constant and variable_inputs, performs simulations, and sav
 - `results` (Dict{String, Any}): simulation results, where keys are variable_input combinations.
 """
 function run_simulations(
-    constant_inputs::OrderedDict{String, T},
-    variable_inputs::OrderedDict{String, Vector{T}},
+    constant_inputs::OrderedDict{String, Any},
+    variable_inputs::OrderedDict{String, Vector{Any}},
     bulk_frac::String,
     sys_in::String="wt",
     output_dir::Union{String, Nothing}=nothing,
     td_database::String="ig"
-    ) where T <: Union{Float64, String}
+    )
 
     output_dir = setup_output_directory(output_dir)
 
@@ -166,7 +166,7 @@ function run_simulations(
 
     # Setup combinations for variable inputs
     combinations = IterTools.product(values(new_variable_inputs)...)  # All combinations of variable_inputs
-    n_sim = $(length(combinations))
+    n_sim = length(combinations)
 
     # Iterate through each combination of variable inputs
     for combination in combinations
