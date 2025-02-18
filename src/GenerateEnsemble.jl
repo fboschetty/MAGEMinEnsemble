@@ -153,9 +153,9 @@ function run_simulations(
     constant_inputs::OrderedDict,
     variable_inputs::OrderedDict,
     bulk_frac::String,
+    td_database::String="ig",
     sys_in::String="wt",
     output_dir::Union{String, Nothing}=nothing,
-    td_database::String="ig"
     )
 
     output_dir = setup_output_directory(output_dir)
