@@ -151,7 +151,7 @@ Extracts inputs from constant and variable_inputs, performs simulations, and sav
 """
 function run_simulations(
     constant_inputs::OrderedDict{String, Any},
-    variable_inputs::OrderedDict{String, Vector{Any}},
+    variable_inputs::OrderedDict{String, Vector},
     bulk_frac::String,
     sys_in::String="wt",
     output_dir::Union{String, Nothing}=nothing,
