@@ -293,6 +293,32 @@ end
 
 
 """
+    check_bulk_frac(td_database)
+
+Check whether bulk_frac is either "bulk" or "frac".
+"""
+function check_bulk_frac(bulk_frac::String)
+    if bulk_frac != "bulk" && bulk_frac != "frac"
+        throw(ArgumentError("Invalid value for bulk_frac: must be either 'bulk' or 'frac'."))
+    end
+end
+
+
+"""
+    check_td_database(td_database)
+
+Check whether the provided td_database flag is accepted by MAGEMin.
+"""
+function check_td_database(td_database::String)
+    accepted_database_flag = ["mtl", "mp", "mb", "ig", "igad", "um", "ume"]
+    accepted_database_str = join(sort(collect(accepted_database_flag)), ", ")
+    if !(td_database in accepted_database_flag)
+        throw(ArgumentError("Invalid database: '$td_database' is not one of: $(accepted_database_str)."))
+    end
+end
+
+
+"""
     prepare_inputs(constant_inputs, variable_inputs)
 
 Prepare and validate both constant_inputs and variable_inputs prior to ensure they are suitable for MAGEMin.
@@ -305,7 +331,10 @@ Prepare and validate both constant_inputs and variable_inputs prior to ensure th
 - `updated_constant_inputs` (Dict): inputs that will remain unchanged between MAGEMin simulations.
 - `updated_variable_inputs` (Dict): inputs that vary across MAGEMin simulations.
 """
-function prepare_inputs(constant_inputs::OrderedDict, variable_inputs::OrderedDict)::Tuple{OrderedDict, OrderedDict}
+function prepare_inputs(constant_inputs::OrderedDict, variable_inputs::OrderedDict, bulk_frac::String, td_database::String)::Tuple{OrderedDict, OrderedDict}
+    check_bulk_frac(bulk_frac)
+    check_td_database(td_database)
+
     check_constant_inputs_values(constant_inputs)
     check_variable_inputs_vectors(variable_inputs)
 

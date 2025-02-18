@@ -124,34 +124,54 @@ end
 
 
 """
-    results = run_simulations(constant_inputs, variable_inputs, bulk_frac)
+    run_simulations(
+    constant_inputs::OrderedDict{String, T},
+    variable_inputs::OrderedDict{String, Vector{T}},
+    bulk_frac::String,
+    sys_in::String="wt",
+    output_dir::Union{String, Nothing}=nothing,
+    td_database::String="ig"
+    ) where T <: Union{Float64, String}
 
 Generates and runs simulation ensembles from intensive variable grid.
 Extracts inputs from constant and variable_inputs, performs simulations, and saves the outputs to appropriately named .csv and metadata files.
 
 ## Inputs
-- `constant_inputs` (Dict): Intensive variables, excluding T, that remain constant across simulation ensemble.
-- `variable_inputs` (Dict): Intensive variables, excluding T, that vary across the simulation ensemble.
+- `constant_inputs` (OrderedDict): Intensive variables, excluding T, that remain constant across simulation ensemble.
+- `variable_inputs` (OrderedDict): Intensive variables, excluding T, that vary across the simulation ensemble.
 - `bulk_frac` (String): Flag to indicate whether bulk or fractional crystallisation simulations should be run. "bulk" indicates bulk crystallisation, "frac" indicates fractional crystallisation.
 
 ## Keyword Arguments
 - `sys_in` (String): Indicate units for input bulk composition (defaults to "wt", wt.%). "mol" for mol.%.
 - `output_dir` (String): Path to save output directory to (defaults to current directory).
-- `database` (String): Thermodynamic database to use (defaults to "ig": Green et al., 2025). See the [MAGEMin github](https://github.com/ComputationalThermodynamics/MAGEMin) for options.
+- `td_database` (String): Flag indicating thermodynamic database to use (defaults to "ig": Green et al., 2025). See the [MAGEMin github](https://github.com/ComputationalThermodynamics/MAGEMin) for options.
 
 ## Outputs
 - `results` (Dict{String, Any}): simulation results, where keys are variable_input combinations.
 """
-function run_simulations(constant_inputs, variable_inputs, bulk_frac::String, sys_in::String="wt", output_dir::Union{String, Nothing}=nothing, database::String="ig")
+function run_simulations(
+    constant_inputs::OrderedDict,
+    variable_inputs::OrderedDict,
+    bulk_frac::String,
+    td_database::String="ig",
+    sys_in::String="wt",
+    output_dir::Union{String, Nothing}=nothing,
+    )
 
     output_dir = setup_output_directory(output_dir)
 
     results = Dict{String, Any}()  # Dictionary to store simulation results
 
-    new_constant_inputs, new_variable_inputs = MAGEMinEnsemble.InputValidation.prepare_inputs(constant_inputs, variable_inputs)
+    new_constant_inputs, new_variable_inputs = MAGEMinEnsemble.InputValidation.prepare_inputs(constant_inputs, variable_inputs, bulk_frac, td_database)
 
     # Setup combinations for variable inputs
     combinations = IterTools.product(values(new_variable_inputs)...)  # All combinations of variable_inputs
+
+    if bulk_frac == "bulk"
+        println("Performing $(length(combinations)) bulk crystallisation simulations...")
+    elseif bulk_frac == "frac"
+        println("Performing $(length(combinations)) fractional crystallisation simulations...")
+    end
 
     # Iterate through each combination of variable inputs
     for combination in combinations
@@ -164,30 +184,26 @@ function run_simulations(constant_inputs, variable_inputs, bulk_frac::String, sy
         # Update all_inputs with the constant_inputs and the updated variable_inputs
         all_inputs = merge(new_constant_inputs, updated_variable_inputs)
 
-        # Extract bulk comp, oxides and create array of temperatures
+        # Extract bulk comp and oxides, create array of temperatures
         bulk_init, Xoxides = get_bulk_oxides(all_inputs)
         T_array = create_T_array(all_inputs)
 
         # Initialize database and extract buffer
         if "buffer" in keys(all_inputs)
-            database = Initialize_MAGEMin(database, verbose=false, buffer=all_inputs["buffer"])
+            database = Initialize_MAGEMin(td_database, verbose=false, buffer=all_inputs["buffer"])
             offset = get(all_inputs, "offset", 0.0)
         else
-            database = Initialize_MAGEMin(database, verbose=false)
+            database = Initialize_MAGEMin(td_database, verbose=false)
             offset = nothing
         end
 
         # Run crystallisation simulation
         if bulk_frac == "bulk"
-            println("Performing $(length(combinations)) bulk crystallisation simulations...")
             output = Crystallisation.bulk_crystallisation(T_array, all_inputs["P"], bulk_init, database, Xoxides, sys_in, offset)
 
         elseif bulk_frac == "frac"
-            println("Performing $(length(combinations)) fractional crystallisation simulations...")
             output = Crystallisation.fractional_crystallisation(T_array, all_inputs["P"], bulk_init, database, Xoxides, sys_in, offset)
 
-        else
-            ErrorException("bulk_frac must be either 'bulk' for bulk crystallisation, or 'frac' for fractional crystallisation.")
         end
 
         # Generate output filename
@@ -195,7 +211,7 @@ function run_simulations(constant_inputs, variable_inputs, bulk_frac::String, sy
 
         # Save simulation data to CSV file
         output_file_path = joinpath(output_dir, "$output_file")
-        MAGEMin_data2dataframe(output, database, output_file_path)
+        MAGEMin_data2dataframe(output, td_database, output_file_path)
 
         # Store result
         results[output_file] = output
