@@ -7,6 +7,9 @@ Intensive variables are assigned using key-value pairs, where the key is always 
 The below example shows how the key and values of `constant_inputs` and `variable_inputs` can be assigned. These will define an ensemble of simulations over variable pressure, water and oxygen fugacity space. For a description of the available intensive variables, see section [Intensive Variables](@ref intensive_variables).
 
 ```Julia
+using MAGEMinEnsemble
+using OrderedCollections
+
 # Assign a constant temperature range, bulk composition and oxygen fugacity buffer
 constant_inputs = OrderedDict(
     # Set the initial, final and incremental
@@ -46,15 +49,15 @@ variable_inputs = OrderedDict(
 )
 
 # Run the simulations, store result in variable Output
-Output = GenerateEnsemble.run_simulations(
+Output = MAGEMinEnsemble.GenerateEnsemble.run_simulations(
     constant_inputs,
     variable_inputs,
-    bulk_frac="frac"
+    "frac"
     )
 ```
 
 
-The `constant_inputs` and `variable_inputs` are passed to the `run_simulations()` function to generate and run the ensemble. The `bulk_frac` argument can be either `"bulk"` or `"frac"` to indicate bulk or fractional crystallisation. The results will be saved as appropriately named .csv files. For this ensemble, they will have the form "P=X\_offset=Y\_H2O=Z.csv", where X, Y and Z refer to the combination of values in `variable_inputs`. The .csv files will be accompanied by metadata.txt files.
+The `constant_inputs` and `variable_inputs` are passed to the `run_simulations()` function to generate and run the ensemble. The third argument (`bulk_frac`) can be either `"bulk"` or `"frac"` to indicate whether to perform bulk or fractional crystallisation simulations. The results will be saved as appropriately named .csv files. For this ensemble, they will have the form "P=X\_offset=Y\_H2O=Z.csv", where X, Y and Z refer to the combination of values in `variable_inputs`. The .csv files will be accompanied by metadata.txt files.
 
 ![Output File Examples](OutputFile_Examples.png)
 

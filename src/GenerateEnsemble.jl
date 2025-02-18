@@ -206,7 +206,6 @@ function run_simulations(
 
         end
 
-        println("boo")
         # Generate output filename
         output_file = generate_output_filename(new_variable_inputs, combination)
 
