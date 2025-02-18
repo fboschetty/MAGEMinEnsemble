@@ -150,8 +150,8 @@ Extracts inputs from constant and variable_inputs, performs simulations, and sav
 - `results` (Dict{String, Any}): simulation results, where keys are variable_input combinations.
 """
 function run_simulations(
-    constant_inputs::OrderedDict{String, Any},
-    variable_inputs::OrderedDict{String, Vector},
+    constant_inputs::OrderedDict,
+    variable_inputs::OrderedDict,
     bulk_frac::String,
     sys_in::String="wt",
     output_dir::Union{String, Nothing}=nothing,
