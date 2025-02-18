@@ -241,7 +241,7 @@ end
 Ensure that provided buffer string(s) is permitted by MAGEMin.
 """
 function validate_buffer(constant_inputs::OrderedDict, variable_inputs::OrderedDict)::Nothing
-    allowed_oxygen_buffers = ["qfm", "qif", "nno", "hm", "cco"]
+    allowed_oxygen_buffers = ["qfm", "qif", "nno", "hm", "cco", "iw"]
     allowed_activity_buffers = ["aH2O", "aO2", "aMgO", "aFeO", "aAl2O3", "aTiO2", "aSio2"]
     allowed_buffers = vcat(allowed_oxygen_buffers, allowed_activity_buffers)
 

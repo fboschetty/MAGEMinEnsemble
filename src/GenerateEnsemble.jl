@@ -124,14 +124,7 @@ end
 
 
 """
-    run_simulations(
-    constant_inputs::OrderedDict{String, T},
-    variable_inputs::OrderedDict{String, Vector{T}},
-    bulk_frac::String,
-    sys_in::String="wt",
-    output_dir::Union{String, Nothing}=nothing,
-    td_database::String="ig"
-    ) where T <: Union{Float64, String}
+    Output = run_simulations(constant_inputs, variable_inputs, bulk_frac)
 
 Generates and runs simulation ensembles from intensive variable grid.
 Extracts inputs from constant and variable_inputs, performs simulations, and saves the outputs to appropriately named .csv and metadata files.
