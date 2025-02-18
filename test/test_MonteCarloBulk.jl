@@ -1,8 +1,7 @@
 using Test
 using Distributions
 
-include("../src/MonteCarloBulk.jl")
-using .MonteCarloBulk
+using MAGEMinEnsemble
 
 # Test: Verify basic functionality with normal inputs
 @testset "generate_bulk_mc basic tests" begin
@@ -10,7 +9,7 @@ using .MonteCarloBulk
     abs_unc = Dict("oxide1" => 2.0, "oxide2" => 5.0)  # Same here
     n_samples = 1000
 
-    bulk_mc = MonteCarloBulk.generate_bulk_mc(bulk, abs_unc, n_samples)
+    bulk_mc = MAGEMinEnsemble.MonteCarloBulk.generate_bulk_mc(bulk, abs_unc, n_samples)
 
     # Check if the result is a dictionary with String keys and Vector{Float64} values
     @test typeof(bulk_mc) == Dict{String, Vector{Float64}}
@@ -33,7 +32,7 @@ end
     n_samples = 1000
 
     # This should throw an error as no matching standard deviation is found
-    @test_throws ErrorException MonteCarloBulk.generate_bulk_mc(bulk, abs_unc, n_samples)
+    @test_throws ErrorException MAGEMinEnsemble.MonteCarloBulk.generate_bulk_mc(bulk, abs_unc, n_samples)
 end
 
 # Test: Check if the function works with a single sample
@@ -42,7 +41,7 @@ end
     abs_unc = Dict("oxide1" => 1.0)
     n_samples = 1
 
-    bulk_mc = MonteCarloBulk.generate_bulk_mc(bulk, abs_unc, n_samples)
+    bulk_mc = MAGEMinEnsemble.MonteCarloBulk.generate_bulk_mc(bulk, abs_unc, n_samples)
 
     # Check if we got exactly 1 sample for oxide1
     @test length(bulk_mc["oxide1"]) == 1
@@ -54,14 +53,14 @@ end
     bulk_ordered = OrderedDict("SiO2" => 12.0, "Al2O3" => 15.0, "Fe2O3" => 20.0)
     abs_unc = Dict("SiO2" => 1.0, "Al2O3" => 1.5, "Fe2O3" => 2.0)
     n_samples = 5
-    result_ordered = MonteCarloBulk.generate_bulk_mc(bulk_ordered, abs_unc, n_samples)
+    result_ordered = MAGEMinEnsemble.MonteCarloBulk.generate_bulk_mc(bulk_ordered, abs_unc, n_samples)
 
     @test typeof(result_ordered) == OrderedDict{String, Vector{Float64}}
     @test all(length(result_ordered[key]) == n_samples for key in keys(result_ordered))
 
     # Dict Test
     bulk_dict = Dict("SiO2" => 12.0, "Al2O3" => 15.0, "Fe2O3" => 20.0)
-    result_dict = MonteCarloBulk.generate_bulk_mc(bulk_dict, abs_unc, n_samples)
+    result_dict = MAGEMinEnsemble.MonteCarloBulk.generate_bulk_mc(bulk_dict, abs_unc, n_samples)
 
     @test typeof(result_dict) == Dict{String, Vector{Float64}}
     @test all(length(result_dict[key]) == n_samples for key in keys(result_dict))
@@ -72,7 +71,7 @@ end
     bulk_with_negatives = Dict("SiO2" => 12.0, "Al2O3" => -5.0, "Fe2O3" => 20.0)
     abs_unc_neg = Dict("SiO2" => 1.0, "Al2O3" => 1.5, "Fe2O3" => 2.0)
 
-    result_with_negatives = MonteCarloBulk.generate_bulk_mc(bulk_with_negatives, abs_unc_neg, 5)
+    result_with_negatives = MAGEMinEnsemble.MonteCarloBulk.generate_bulk_mc(bulk_with_negatives, abs_unc_neg, 5)
 
     # Check that negative values were replaced by zero
     @test all(result_with_negatives["Al2O3"] .>= 0)
@@ -85,6 +84,6 @@ end
 
     # Check if the warning message was logged
     @test_warn "Negative values replaced by zero." begin
-        MonteCarloBulk.generate_bulk_mc(bulk_warn, abs_unc_warn, 5)
+        MAGEMinEnsemble.MonteCarloBulk.generate_bulk_mc(bulk_warn, abs_unc_warn, 5)
     end
 end
