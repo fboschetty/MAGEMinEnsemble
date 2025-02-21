@@ -3,7 +3,7 @@
 Modules = [MAGEMinEnsemble]
 ```
 
-## `FractionalCrystallisation` Submodule
+## `Crystallisation` Submodule
 ```@autodocs
 Modules = [MAGEMinEnsemble.Crystallisation]
 ```

@@ -97,7 +97,7 @@ end
 
 Helper function to generate the output filename. Has different behaviour dependant on the number of oxides in variable_inputs.
 """
-function generate_output_filename(variable_inputs::OrderedDict, combination::Tuple{Vararg{Float64}})::String
+function generate_output_filename(variable_inputs::OrderedDict, combination::Tuple)::String
 
     # variable_oxides = check_variable_oxides(variable_inputs)
     filename_parts = []
