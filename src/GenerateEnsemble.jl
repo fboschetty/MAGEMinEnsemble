@@ -46,7 +46,7 @@ function setup_output_directory(output_dir::Union{String, Nothing})::String
     # Check if the output directory exists, if not, create it
     if !isdir(output_dir)
         println("The specified output directory does not exist. Creating: $output_dir")
-        mkdir(output_dir)
+        mkpath(output_dir)
         return output_dir
     else
         # If directory exists, check if it contains any .csv files
