@@ -10,7 +10,8 @@ makedocs(
         "Home" => "index.md",
         "Basic Usage" => "basic_usage.md",
         "Intensive Variables" => "intensive_variables.md",
-        "Functions" => "functions.md"
+        "Controlling Oxygen Fugacity" => "oxygen_fugacity.md",
+        "Functions" => "functions.md",
     ]
 )
 
