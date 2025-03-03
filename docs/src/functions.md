@@ -3,14 +3,9 @@
 Modules = [MAGEMinEnsemble]
 ```
 
-## `FractionalCrystallisation` Submodule
+## `Crystallisation` Submodule
 ```@autodocs
 Modules = [MAGEMinEnsemble.Crystallisation]
-```
-
-## `MonteCarloBulk` Submodule
-```@autodocs
-Modules = [MAGEMinEnsemble.MonteCarloBulk]
 ```
 
 ## `InputValidation` Submodule
@@ -21,4 +16,9 @@ Modules = [MAGEMinEnsemble.InputValidation]
 ## `GenerateEnsemble` Submodule
 ```@autodocs
 Modules = [MAGEMinEnsemble.GenerateEnsemble]
+```
+
+## `MonteCarloBulk` Submodule
+```@autodocs
+Modules = [MAGEMinEnsemble.MonteCarloBulk]
 ```

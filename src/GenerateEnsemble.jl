@@ -46,7 +46,7 @@ function setup_output_directory(output_dir::Union{String, Nothing})::String
     # Check if the output directory exists, if not, create it
     if !isdir(output_dir)
         println("The specified output directory does not exist. Creating: $output_dir")
-        mkdir(output_dir)
+        mkpath(output_dir)
         return output_dir
     else
         # If directory exists, check if it contains any .csv files
@@ -97,7 +97,7 @@ end
 
 Helper function to generate the output filename. Has different behaviour dependant on the number of oxides in variable_inputs.
 """
-function generate_output_filename(variable_inputs::OrderedDict, combination::Tuple{Vararg{Float64}})::String
+function generate_output_filename(variable_inputs::OrderedDict, combination::Tuple)::String
 
     # variable_oxides = check_variable_oxides(variable_inputs)
     filename_parts = []

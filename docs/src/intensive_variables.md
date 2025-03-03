@@ -90,7 +90,7 @@ The oxygen fugacity buffer constrains the free oxygen content according to a pre
 - Nickel-Nickel Oxide (`"nno"`)
 - Hematite-Magnetite (`"hm"`)
 - Iron-Wüstite (`"iw"`)
-- Carbon Dioxide-Carbon (`"cco"`)
+- Carbon-Carbon Monoxide (`"cco"`)
 
 If an oxygen fugacity buffer is set, there must be sufficient `"O"` or `"Fe2O3"` defined in the bulk composition to saturate the system at that buffer. Excess `"O"` or `"Fe2O3"` will be removed. The oxygen (`"O"`) content is set to be equal to `"Fe2O3"`. Therefore both `"O"` and `"Fe2O3"` should not be defined in the bulk composition.
 
