@@ -1,20 +1,31 @@
+using Pkg
+using Documenter
+using DocumenterCitations
+using MAGEMinEnsemble
 
-using Documenter, MAGEMinEnsemble
+bib = CitationBibliography(
+    joinpath(@__DIR__, "src", "oxygen_fugacity.bib");
+    style=:authoryear
+)
 
 makedocs(
     sitename="MAGEMinEnsemble",
     modules = [MAGEMinEnsemble],
     authors = "Felix Boschetty",
-    format = Documenter.HTML(),
+    format = Documenter.HTML(
+        prettyurls=true
+    ),
     pages = [
         "Home" => "index.md",
         "Basic Usage" => "basic_usage.md",
         "Intensive Variables" => "intensive_variables.md",
         "Controlling Oxygen Fugacity" => "oxygen_fugacity.md",
+        "Monte Carlo Bulk Composition" => "monte_carlo.md",
         "Functions" => "functions.md",
-    ]
+    ],
+    plugins = [bib]
 )
 
-deploydocs(
+deploydocs(;
     repo = "https://github.com/fboschetty/MAGEMinEnsemble.git",
 )
