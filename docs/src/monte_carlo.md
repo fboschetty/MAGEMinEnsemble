@@ -10,7 +10,7 @@ In the context of varying a bulk composition within its analytical uncertainty, 
 2. Run multiple simulations to see how these variations affect the results or outcomes.
 3. Analyse the spread of results to understand the potential impact of the analytical uncertainty on your final conclusions.
 
-## Implementing with MAGEMin Ensemble
+## Implementing with MAGEMinEnsemble
 
  MAGEMinEnsemble has a function specially designed for this. The function `generate_bulk_mc` accepts two dictionaries, one defining a bulk composition as above (`"bulk"`), and a second containing corresponding absolute uncertainties (`"abs_unc"`). It produces a vector `n_samples` long for each oxide where each value is randomly sampled from a normal distribution defined by the measured value and its analytical uncertainty.
 

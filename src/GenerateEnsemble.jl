@@ -187,7 +187,15 @@ function run_simulations(
             offset = get(all_inputs, "offset", 0.0)
         else
             database = Initialize_MAGEMin(td_database, verbose=false)
-            offset = nothing
+            offset = 0.0
+        end
+
+        # Convert to mol to minimise potential rounding errors, ensure correct order etc.
+        if sys_in == "wt"
+            bulk_init, Xoxides = convertBulk4MAGEMin(bulk_init, Xoxides, "wt", td_database)
+            sys_in = "mol"
+        elseif sys_in == "mol"
+            bulk_init, Xoxides = convertBulk4MAGEMin(bulk_init, Xoxides, "mol", td_database)
         end
 
         # Run crystallisation simulation
