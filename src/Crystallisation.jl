@@ -29,12 +29,14 @@ function fractional_crystallisation(T_array::Vector{Float64}, P::Float64, bulk_i
     bulk = deepcopy(bulk_init)
     max_T_steps = length(T_array)
     melt_fraction = 1.0
+    current_T_step = 1
+
     output = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef, max_T_steps)
 
     id_O = findfirst(oxides .== "O")
 
     while melt_fraction > 0.0 && current_T_step <= max_T_steps
-        output[i] = deepcopy(single_point_minimization(
+        output[current_T_step] = deepcopy(single_point_minimization(
             P_array[current_T_step],
             T_array[current_T_step],
             database,
