@@ -1,4 +1,5 @@
 # Controlling Oxygen Fugacity
+
 ## Introduction
 
 ### What is an Oxygen Fugacity Buffer?
@@ -8,6 +9,7 @@ Each oxygen fugacity buffer, given specified temperature and pressure conditions
 ```math
 \log_{10} f\mathrm{O_2} = \frac{\mu_{\mathrm{O_2}}^\circ + \int \Delta V \, dP}{R \times T \times \ln 10}
 ```
+
 where ``V`` is volume in m³, ``P`` is pressure in bar, ``R`` is the molar gas constant, and ``T`` is the temperature in Kelvin.
 
 !!! note
@@ -16,6 +18,7 @@ where ``V`` is volume in m³, ``P`` is pressure in bar, ``R`` is the molar gas c
 ### Controlling Oxygen Fugacity in MAGEMin
 
 MAGEMin allows the oxygen fugacity of a simulation to be controlled in several ways:
+
 ```@raw html
 <ol>
     <li>Specify an oxygen fugacity buffer and/or offset, then prescribe the amount of free oxygen by:
@@ -38,6 +41,7 @@ This question can be addressed by performing a series of MAGEMin simulations wit
 ## Testing Using MAGEMinEnsemble
 
 The code below performs 90 bulk crystallisation simulations using MAGEMinEnsemble. The composition used is a well-studied peridotite-like composition, KLB-1 [takahashi1986](@cite). The simulations are performed at 1 °C temperature steps between 1400 and 800 °C. To examine the effect of pressure, simulations are performed at 1 bar, 1.0 kbar, and 5.0 kbar. All oxygen fugacity buffers currently available in MAGEMin are tested. Finally the simulations are performed with variable oxygen, or Fe₂O₃, contents, at 0.0, 1.0, 5.0, 10.0 and 20.0 wt.%.
+
 ```julia
 constant_inputs = OrderedDict(
     # Set the initial, final and incremental
