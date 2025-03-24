@@ -49,7 +49,7 @@ function fractional_crystallisation(T_array::Vector{Float64}, P::Float64, bulk_i
         # If the liquid phase is present, the bulk composition is updated
         if "liq" in output[current_T_step].ph
             bulk = deepcopy(output[current_T_step].bulk_M)
-            bulk[id_O] = bulk_init[id_O]  # Ensure sufficient O to saturate buffer.
+            bulk[id_O] = bulk_init[id_O] / 100  # Ensure sufficient O to saturate buffer.
         else
             break
         end

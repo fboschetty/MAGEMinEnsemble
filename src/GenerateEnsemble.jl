@@ -32,39 +32,7 @@ function create_T_array(all_inputs::OrderedDict)::Vector{Float64}
 end
 
 
-"""
-    output_dir = setup_output_directory(output_dir)
 
-Function to check whether specified output directory exists.
-If not, creates directory. If it does, checks for .csv files.
-If directory contains .csv files throws and error and tells the user to choose another new/empty directory.
-"""
-function setup_output_directory(output_dir::Union{String, Nothing})::String
-    # if output_dir isn't specified, use current directory
-    output_dir = output_dir == "" || output_dir == nothing ? joinpath(pwd()) : output_dir
-
-    # Check if the output directory exists, if not, create it
-    if !isdir(output_dir)
-        println("The specified output directory does not exist. Creating: $output_dir")
-        mkpath(output_dir)
-        return output_dir
-    else
-        # If directory exists, check if it contains any .csv files
-        csv_files = filter(f -> endswith(f, ".csv"), readdir(output_dir))
-
-        if !isempty(csv_files)
-            # Prompt the user if there are existing .csv files
-            error("""
-                The specified output directory ($output_dir) may already contain simulation output .csv files:
-                    $(join(csv_files, ", "))
-                Make sure the output directory doesn't contain any .csv files..
-                """
-            )
-        else
-            return output_dir
-        end
-    end
-end
 
 
 """
@@ -93,33 +61,89 @@ end
 
 
 """
-    output_file = generate_output_filename(variable_inputs)
+    database, offset, exclude_oxygen = initialize_database(td_database, all_inputs)
 
-Helper function to generate the output filename. Has different behaviour dependant on the number of oxides in variable_inputs.
+Initializes the MAGEMin database and extracts the offset value while determining whether to exclude oxygen from the bulk composition conversion.
+
+# Arguments
+- `td_database::String`: The name of the thermodynamic database to be used.
+- `all_inputs::Dict{String, Any}`: A dictionary of input parameters, which may include:
+  - `"buffer"`: Specifies a buffer condition for database initialization.
+  - `"offset"`: A numerical offset value (default is `0.0` if not provided).
+
+# Returns
+- `database::Any`: The initialized MAGEMin database object.
+- `offset::Float64`: The extracted offset value (default is `0.0`).
+- `exclude_oxygen::Bool`: `true` if `"buffer"` is present (meaning oxygen should be excluded), otherwise `false`.
 """
-function generate_output_filename(variable_inputs::OrderedDict, combination::Tuple)::String
+function initialize_database(td_database::String, all_inputs::OrderedDict)
+    if "buffer" in keys(all_inputs)
+        database = Initialize_MAGEMin(td_database, verbose=false, buffer=all_inputs["buffer"])
+        offset = get(all_inputs, "offset", 0.0)
+        exclude_oxygen = true
+    else
+        database = Initialize_MAGEMin(td_database, verbose=false)
+        offset = 0.0
+        exclude_oxygen = false
+    end
+    return database, offset, exclude_oxygen
+end
 
-    # variable_oxides = check_variable_oxides(variable_inputs)
-    filename_parts = []
 
-    # Generate filename_parts
-    append!(filename_parts, [string(collect(keys(variable_inputs))[i], "=", combination[i]) for i in eachindex(combination)])
+"""
+   bulk_init, Xoxides = convert_bulk2mol(bulk_init, Xoxides, sys_in, td_database, exclude_oxygen)
 
-    # if length(variable_oxides) > 3
-    #     @warn """ You have provided more than 3 variable oxides in variable_inputs['bulk'].
-    #     Output files will contain bulk instead of the oxides and their values to prevent overly complex file names.
-    #     """
+Converts a bulk oxide composition from weight percent (`"wt"`) to mol percent (`"mol"`).
+Deals with excess oxygen if a buffer is set to prevent excess oxygen skewing normalised compositions.
 
-    #     # Remove oxides and their values from filename_parts
-    #     filename_parts = filter(x -> !any(occursin(oxide, x) for oxide in variable_oxides), filename_parts)
+### Arguments
+- `bulk_init::Vector{Float64}`: Initial bulk composition values.
+- `Xoxides::Vector{String}`: Corresponding oxide names.
+- `sys_in::String`: The input system, either `"wt"` (weight percent) or `"mol"` (molar percent).
+- `td_database::String`: The thermodynamic database to use for conversion.
+- `exclude_oxygen::Bool`: A flag for whether oxygen should be included in the normalisation or not.
 
-    #     # Add bulk1, bulk2, etc. for each composition (only one bulk identifier for the combination)
-    #     push!(filename_parts, "bulk")
-    # end
+### Returns
+- A tuple `(bulk_converted, Xoxides_converted)`, where:
+  - `bulk_converted::Vector{Float64}`: The converted bulk composition in mol percent.
+  - `Xoxides_converted::Vector{String}`: The corresponding oxide names.
 
-    # Join parts with underscores
-    output_file = join(filename_parts, "_")
-    return output_file
+### Behaviour
+- If oxygen (`"O"`) is present in `Xoxides`, its contribution is temporarily removed, the remaining composition is converted, and then oxygen is reassigned correctly.
+- If `"wt"` is given as input, oxygen is converted from weight to mol fraction.
+- If `"mol"` is given, the function ensures correct assignment of `"O"` in the MAGEMinEnsemble.Output.
+- If `"O"` is not found in `Xoxides`, the function returns the input unchanged.
+"""
+function convert_bulk_composition(
+    bulk_init::Vector{Float64},
+    Xoxides::Vector{String},
+    sys_in::String,
+    td_database::String,
+    exclude_oxygen::Bool
+) :: Tuple{Vector{Float64}, Vector{String}}
+
+    bulk_init, Xoxides = copy(bulk_init), copy(Xoxides)
+
+    # Locate "O" in the list of oxides
+    ind_O = findfirst(==("O"), Xoxides)
+
+    if exclude_oxygen && ind_O !== nothing
+        # Temporarily remove oxygen for conversion
+        oxygen_mass = bulk_init[ind_O]
+        bulk_init[ind_O] = 0.0
+
+        # Convert without O
+        bulk_converted, Xoxides_converted = convertBulk4MAGEMin(bulk_init, Xoxides, sys_in, td_database)
+
+        # Restore oxygen correctly
+        oxygen_mol = sys_in == "wt" ? oxygen_mass / 15.9999 : oxygen_mass
+        bulk_converted[findfirst(==("O"), Xoxides_converted)] = oxygen_mol
+    else
+        # Convert normally
+        bulk_converted, Xoxides_converted = convertBulk4MAGEMin(bulk_init, Xoxides, sys_in, td_database)
+    end
+
+    return bulk_converted, Xoxides_converted
 end
 
 
@@ -151,7 +175,7 @@ function run_simulations(
     output_dir::Union{String, Nothing}=nothing,
     )
 
-    output_dir = setup_output_directory(output_dir)
+    output_dir = MAGEMinEnsemble.Output.setup_output_directory(output_dir)
 
     results = Dict{String, Any}()  # Dictionary to store simulation results
 
@@ -182,35 +206,25 @@ function run_simulations(
         T_array = create_T_array(all_inputs)
 
         # Initialize database and extract buffer
-        if "buffer" in keys(all_inputs)
-            database = Initialize_MAGEMin(td_database, verbose=false, buffer=all_inputs["buffer"])
-            offset = get(all_inputs, "offset", 0.0)
-        else
-            database = Initialize_MAGEMin(td_database, verbose=false)
-            offset = 0.0
-        end
+        database, offset, exclude_oxygen = initialize_database(td_database, all_inputs)
 
-        # Convert to mol to minimise potential rounding errors, ensure correct order etc.
-        if sys_in == "wt"
-            bulk_init, Xoxides = convertBulk4MAGEMin(bulk_init, Xoxides, "wt", td_database)
-            sys_in = "mol"
-        elseif sys_in == "mol"
-            bulk_init, Xoxides = convertBulk4MAGEMin(bulk_init, Xoxides, "mol", td_database)
-        end
+        # Convert bulk comp to mol% for MAGEMin, and deal with excess O correctly
+        bulk_converted, Xoxides_converted = convert_bulk_composition(bulk_init, Xoxides, sys_in, td_database, exclude_oxygen)
 
         # Run crystallisation simulation
         if bulk_frac == "bulk"
-            output = Crystallisation.bulk_crystallisation(T_array, all_inputs["P"], bulk_init, database, Xoxides, sys_in, offset)
+            output = Crystallisation.bulk_crystallisation(T_array, all_inputs["P"], bulk_converted, database, Xoxides_converted, "mol", offset)
 
         elseif bulk_frac == "frac"
-            output = Crystallisation.fractional_crystallisation(T_array, all_inputs["P"], bulk_init, database, Xoxides, sys_in, offset)
+            output = Crystallisation.fractional_crystallisation(T_array, all_inputs["P"], bulk_converted, database, Xoxides_converted, "mol", offset)
 
         end
 
         # Generate output filename
-        output_file = generate_output_filename(new_variable_inputs, combination)
+        output_file = MAGEMinEnsemble.Output.generate_output_filename(new_variable_inputs, combination)
 
         # Save simulation data to CSV file
+        println(output_file)
         output_file_path = joinpath(output_dir, "$output_file")
         MAGEMin_data2dataframe(output, td_database, output_file_path)
 
