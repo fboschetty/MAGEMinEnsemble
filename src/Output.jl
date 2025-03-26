@@ -15,23 +15,10 @@ Helper function to generate the output filename. Has different behaviour dependa
 """
 function generate_output_filename(variable_inputs::OrderedDict, combination::Tuple)::String
 
-    # variable_oxides = check_variable_oxides(variable_inputs)
     filename_parts = []
 
     # Generate filename_parts
     append!(filename_parts, [string(collect(keys(variable_inputs))[i], "=", combination[i]) for i in eachindex(combination)])
-
-    # if length(variable_oxides) > 3
-    #     @warn """ You have provided more than 3 variable oxides in variable_inputs['bulk'].
-    #     Output files will contain bulk instead of the oxides and their values to prevent overly complex file names.
-    #     """
-
-    #     # Remove oxides and their values from filename_parts
-    #     filename_parts = filter(x -> !any(occursin(oxide, x) for oxide in variable_oxides), filename_parts)
-
-    #     # Add bulk1, bulk2, etc. for each composition (only one bulk identifier for the combination)
-    #     push!(filename_parts, "bulk")
-    # end
 
     # Join parts with underscores
     output_file = join(filename_parts, "_")
@@ -73,12 +60,12 @@ function setup_output_directory(output_dir::Union{String, Nothing})::String
     end
 end
 
-"""
-MAGEMin_data2dataframe( out:: Union{Vector{MAGEMin_C.gmin_struct{Float64, Int64}}, MAGEMin_C.gmin_struct{Float64, Int64}})
+# """
+# MAGEMin_data2dataframe( out:: Union{Vector{MAGEMin_C.gmin_struct{Float64, Int64}}, MAGEMin_C.gmin_struct{Float64, Int64}})
 
-    Transform MAGEMin output into a dataframe for quick(ish) save
+#     Transform MAGEMin output into a dataframe for quick(ish) save
 
-"""
+# """
 # function save_output_to_csv(out::Union{Vector{gmin_struct{Float64, Int64}}, gmin_struct{Float64, Int64}}, dtb,fileout)
 
 #     # here we fill the dataframe with the all minimized point entries

@@ -385,7 +385,7 @@ function run_simulations_mc(
     output_dir::Union{String, Nothing}=nothing,
     )::OrderedDict{String, Any}
 
-    output_dir = MAGEMinEnsemble.GenerateEnsemble.setup_output_directory(output_dir)
+    output_dir = MAGEMinEnsemble.Output.setup_output_directory(output_dir)
 
     results = OrderedDict{String, Any}()  # Dictionary to store simulation results
 

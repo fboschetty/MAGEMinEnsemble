@@ -29,3 +29,9 @@ Modules = [MAGEMinEnsemble.GenerateEnsemble]
 ```@autodocs
 Modules = [MAGEMinEnsemble.MonteCarloBulk]
 ```
+
+## `Output` Submodule
+
+```@autodocs
+Modules = [MAGEMinEnsemble.Output]
+```
