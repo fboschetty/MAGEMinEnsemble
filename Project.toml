@@ -11,11 +11,3 @@ IterTools = "c8e1da08-722c-5040-9ed9-7db0dc04731e"
 MAGEMin_C = "e5d170eb-415a-4524-987b-12f1bce1ddab"
 OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-
-[compat]
-Distributions = "0.25.117"
-FileIO = "1.16.6"
-IterTools = "1.10.0"
-MAGEMin_C = "1.7.6"
-OrderedCollections = "1.8.0"
-Test = "1.11.0"
